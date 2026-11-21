@@ -1,0 +1,91 @@
+{
+  "network": "qorechain-diana",
+  "evmChainId": 9800,
+  "deployedAt": "2026-11-21T20:56:21.709Z",
+  "compiler": "0.8.28+commit.7893614a.Emscripten.clang",
+  "contracts": {
+    "fusd": "0x97143B771D34ddb9130b807b135Ae675A5a963CA",
+    "holderGuard": {
+      "address": "0x3535f314f62b96a55f584e27257eb8a2001bdfb0",
+      "deployTx": "0x3b135ae58a124138bf97c8772fbdd0f4800726d9710ce7397e70b631fe8944f3",
+      "exemptTx": "0x4e1bd19a3de25996a20802885bce4e9a9a6ce28c49a7989ddcf55fce51561ade",
+      "renounceOwnershipTx": "0x67f84edcb52760934464f028426da056ce86c259e7f46b5823f9661ac23a440d",
+      "ownerAfterRenounce": "0x0000000000000000000000000000000000000000",
+      "attenuaVaultExempt": true
+    },
+    "liquidityVault": {
+      "address": "0x89e59628b800ef17b55b7b81891d1de82c4185c3",
+      "deployTx": "0xf955616bd8feb1606f5b650148d4056a5f081ef1ef5611e5f719f77dd9f5b436"
+    },
+    "reserveVault": {
+      "address": "0xf09b664c39457ff01356a35ad2fc6fe5e2113cb3",
+      "deployTx": "0xde47cd0f406fae88157d5307e0272d56e29474ac89e401062c2c5ed2e01ebb24"
+    },
+    "attenuaVault": {
+      "address": "0x4518ef0ddf04b2be51370045bf8154cce8cef7c4",
+      "deployTx": "0x7dadaa74545cdba499db3eb5e167b9a2c64826f2ec949fb488016e86859bdca6",
+      "bytecodeHash": "0x7df74a28f461c116490705e400fdadb61856c9ac823a934ffae76e9eb8753304"
+    }
+  },
+  "windows": {
+    "deployOpenTx": "9E5B80D65B34E7B2009F8E1A864B2C8013C8C19A80C51C2F2A897F14A9DEB5AC",
+    "deployCloseTx": "0E0F15E8CAD82857EE3E05A30DEE90556DB0C11420301246E8BAC95C3B1AED9B",
+    "guardAdminOpenTx": "2C9723365813279966CE6D68F1F10D050D7D73D3B708387C4B8F690CF37A7FC4",
+    "guardAdminCloseTx": "0F8FD405B956CFADE141771920BF1088B9FE4C562CFFB7F6D5602710A0CFCD0B"
+  },
+  "abstractAccounts": {
+    "ownerTreasuryAA1": {
+      "cosmos": "qor1k4xryjqufhdh44hgsqdpj5llr7y3dwyfenxfqg",
+      "evm": "0xb54C32481C4DdB7aD6E8801A1953Ff1f8916B889",
+      "orchestratorPubkeyHex": "0xa1b017d5a8e4bc892810a71da23a0f31bc4320c7b6e8064f551695b96b690b45",
+      "linkTx": "D28E175513B426972E618DC1F2AB0B9484FD2A740B6BF8E4DA9CF21ED505DF56"
+    },
+    "monitorAA2": {
+      "cosmos": "qor10vv75f5qwca5hra7ye0vxwemz2t6q6lv28m7d4",
+      "evm": "0x7b19eA2680763B4b8fBe265eC33b3b1297A06beC",
+      "monitorPubkeyHex": "0x114f02a5e5710ff9dba3109e5df4ac0d41f6040953cd81c144e0885c0a335fee",
+      "linkTx": "6E09E2EFA932B38CF18E84A7BABBC25057F926200904AD9903E93A0D84D5644B"
+    }
+  },
+  "actors": {
+    "relayer": {
+      "cosmos": "qor123ss4muqpmc6vzh2fmelawahzfvrgggsfqxunw",
+      "evm": "0x54610AEF800ef1A60AEa4Ef3FeBbb71258342110"
+    },
+    "orchestratorPqc": {
+      "cosmos": "qor1f5emshdp3pth6rj6y0skrncqcvhdtn9njql2e0",
+      "evm": "0x4D33b85Da188577d0e5A23E161Cf00c32ed5ccB3"
+    },
+    "allocator": {
+      "cosmos": "qor12lde9j7aq66a62gpv3ctt5h262j3nsrjp25rkr",
+      "evm": "0x57Db92cbDd06b5dD29016470b5D2eaD2a519c072"
+    },
+    "payables": {
+      "cosmos": "qor1yqpmyqpl73s8y9uwgrnt2p8ukcq5497wz9czxy",
+      "evm": "0x2003B2003ff46072178e40E6b504FCb6014a97CE"
+    },
+    "research": {
+      "cosmos": "qor1d8efrydhtz4pgy6q0kz53nvtn3muvw6c6af2y6",
+      "evm": "0x69F29191b758aA1413407d8548Cd8b9c77c63B58"
+    },
+    "vendor": {
+      "cosmos": "qor19nukelxkewjx66v08lx3kunqylsyczqgflfzhq",
+      "evm": "0x2cF96cFCd6cba46D698f3fcd1B726027E04C0808"
+    },
+    "unlistedAttacker": {
+      "cosmos": "qor1eq5tjhg0mhc8da5c7p9gwt9fqhl6kxdvnkv2tw",
+      "evm": "0xc828b95D0fDdf076F698F04a872cA905Ffab19ac"
+    }
+  },
+  "selectors": {
+    "setRootMandate": "0xa319b8e6",
+    "setVendor": "0x65375bb4",
+    "registerSubMandate": "0x2d5995c1",
+    "reclaimSubMandate": "0xa4f203f7",
+    "executeAllocate": "0x24cd98b9",
+    "executePayInvoice": "0x8d513bef",
+    "revokeRootEpoch": "0x4050ce73",
+    "unfreeze": "0x9dc83361",
+    "freeze": "0xbd2d305f"
+  }
+}

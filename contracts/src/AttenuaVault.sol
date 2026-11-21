@@ -112,9 +112,10 @@ contract AttenuaVault is ReentrancyGuard {
     event AllocationExecuted(
         bytes32 indexed mandateId,
         address indexed subAgent,
-        address indexed targetVault,
-        bool isDeposit,
-        uint256 amount,
+        uint256 liqAmount,
+        bool liqIsDeposit,
+        uint256 resAmount,
+        bool resIsDeposit,
         uint256 postLiquidityBps
     );
     event InvoicePaid(
@@ -531,28 +532,27 @@ contract AttenuaVault is ReentrancyGuard {
     }
 
     // =========================================================================
-    // Sub-Agent 1: Allocator (ERC-4626 Rebalance Inside Narrowed IPS Band)
+    // Sub-Agent 1: Allocator (Atomic Dual-Sleeve ERC-4626 Rebalance Inside IPS Band)
     // =========================================================================
 
     function executeAllocate(
         bytes32 mandateId,
-        address targetVault,
-        bool isDeposit,
-        uint256 amount,
+        uint256 liqAmount,
+        bool liqIsDeposit,
+        uint256 resAmount,
+        bool resIsDeposit,
         uint64 nonce,
         uint64 deadline,
         bytes calldata subAgentPqcSig
     ) external nonReentrant {
         if (frozen) revert VaultIsFrozen();
-        if (amount == 0) revert InvalidAmount();
-        if (targetVault != address(liquidityVault) && targetVault != address(reserveVault)) {
-            revert InvalidTargetVault(targetVault);
-        }
+        uint256 grossVolume = liqAmount + resAmount;
+        if (grossVolume == 0) revert InvalidAmount();
 
         SubMandate storage sm = _requireActiveSubMandate(mandateId, BIT_ALLOCATE);
         if (sm.budget == 0) revert ZeroBudgetCapability(mandateId);
         uint256 remaining = sm.budget - sm.spent - sm.allocated;
-        if (amount > remaining) revert SubMandateBudgetExceeded(amount, remaining);
+        if (grossVolume > remaining) revert SubMandateBudgetExceeded(grossVolume, remaining);
 
         _consumeNonceAndDeadline(sm.subAgent, nonce, deadline);
 
@@ -562,22 +562,33 @@ contract AttenuaVault is ReentrancyGuard {
             address(this),
             rootEpoch,
             mandateId,
-            targetVault,
-            isDeposit,
-            amount,
+            liqAmount,
+            liqIsDeposit,
+            resAmount,
+            resIsDeposit,
             nonce,
             deadline
         );
         PqcVerifier.verify(sm.subAgent, subAgentPqcSig, digest);
 
-        sm.spent += amount;
+        sm.spent += grossVolume;
 
-        if (isDeposit) {
-            fusd.forceApprove(targetVault, amount);
-            IERC4626(targetVault).deposit(amount, address(this));
-            fusd.forceApprove(targetVault, 0);
-        } else {
-            IERC4626(targetVault).withdraw(amount, address(this), address(this));
+        // Execute withdrawals first so freed fUSD can be redeployed atomically in the same tx
+        if (liqAmount > 0 && !liqIsDeposit) {
+            liquidityVault.withdraw(liqAmount, address(this), address(this));
+        }
+        if (resAmount > 0 && !resIsDeposit) {
+            reserveVault.withdraw(resAmount, address(this), address(this));
+        }
+        if (liqAmount > 0 && liqIsDeposit) {
+            fusd.forceApprove(address(liquidityVault), liqAmount);
+            liquidityVault.deposit(liqAmount, address(this));
+            fusd.forceApprove(address(liquidityVault), 0);
+        }
+        if (resAmount > 0 && resIsDeposit) {
+            fusd.forceApprove(address(reserveVault), resAmount);
+            reserveVault.deposit(resAmount, address(this));
+            fusd.forceApprove(address(reserveVault), 0);
         }
 
         // Oracle-free on-chain portfolio weight check via ERC-4626 convertToAssets()
@@ -590,7 +601,7 @@ contract AttenuaVault is ReentrancyGuard {
             revert PortfolioBandViolated(liqBps, sm.minLiquidityBps, sm.maxLiquidityBps);
         }
 
-        emit AllocationExecuted(mandateId, sm.subAgent, targetVault, isDeposit, amount, liqBps);
+        emit AllocationExecuted(mandateId, sm.subAgent, liqAmount, liqIsDeposit, resAmount, resIsDeposit, liqBps);
     }
 
     // =========================================================================

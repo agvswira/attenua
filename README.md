@@ -28,6 +28,37 @@ Production AI agents do not operate alone — an **Orchestrator** agent spawns s
    - **`Payables`**: Pays allowlisted vendors only with **3× atomic on-chain `ML-DSA-87` verification** (~630k gas): `Payables` execution + `Vendor` invoice + `Research` clearance verdict.
    - **`Research` (`budget = 0`)**: Read-only analyst using `@qorechain/mcp` that screens unstructured invoices for prompt injections and signs `ML-DSA-87` clearance verdicts while being cryptographically incapable of spending `1 uqor`.
 
+## Live Deployment on `qorechain-diana` (EVM Chain ID `9800`)
+
+Full manifest in [`deployments/qorechain-diana.json`](deployments/qorechain-diana.json) and live 3-sub-agent swarm + 9-attack proof in [`deployments/live-run-evidence.json`](deployments/live-run-evidence.json):
+
+| Contract / Account | Address | Hardening Status |
+|---|---|---|
+| `AttenuaVault` | `0x4518ef0ddf04b2be51370045bf8154cce8cef7c4` | Zero `msg.sender` trust; per-action `ML-DSA-87` via `0x...0a01` & `0x...0a02` |
+| `QoreChainHybridHolderGuard` | `0x3535f314f62b96a55f584e27257eb8a2001bdfb0` | `exempt(AttenuaVault) = true`; `owner = 0x0000...0000` (renounced); Owner EVM window closed (`live = false`) |
+| `LiquidityVault` (ERC-4626 `fUSD`) | `0x89e59628b800ef17b55b7b81891d1de82c4185c3` | Apache-2.0 `@qorechain/asset-kit` `QoreChainRwaVault` |
+| `ReserveVault` (ERC-4626 `fUSD`) | `0xf09b664c39457ff01356a35ad2fc6fe5e2113cb3` | Apache-2.0 `@qorechain/asset-kit` `QoreChainRwaVault` |
+| Owner Treasury (AA #1) | `qor1k4xryjqufhdh44hgsqdpj5llr7y3dwyfenxfqg` | Single-linked-key invariant (Orchestrator only); `fUSD` cap `10/tx`, `25/day` |
+| Isolated Monitor (AA #2) | `qor10vv75f5qwca5hra7ye0vxwemz2t6q6lv28m7d4` | `0 fUSD`, `1 uqor/day`, locked to `AttenuaVault.freeze()` (`0xbd2d305f`) only |
+
+## Quick Keyless Verification (Zero Private Keys Required)
+
+Verify live `qorechain-diana` contract bytecode, renounced guard ownership, closed EVM window, AA #1 / AA #2 isolation, registered `ML-DSA-87` keys, and recorded `H1–H7` + `A1–A9` proofs directly against the testnet:
+
+```bash
+cd agent
+npm install
+npm run verify
+```
+
+### Run the Web Dashboard & Read-Only Live Attack Theatre
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
 ## Step 0 Empirical Testnet Proof (`qorechain-diana`, Chain ID `9800`)
 
 Before locking [`docs/SPEC.md`](docs/SPEC.md), all 8 protocol assumptions were tested live on `qorechain-diana` (see [`docs/SPIKE_RESULTS.md`](docs/SPIKE_RESULTS.md)):
@@ -36,7 +67,9 @@ Before locking [`docs/SPEC.md`](docs/SPEC.md), all 8 protocol assumptions were t
 
 ## Documentation
 
-- [`docs/SPEC.md`](docs/SPEC.md) — Post-spike architecture specification & honest limits
+- [`docs/SPEC.md`](docs/SPEC.md) — Post-spike architecture specification
+- [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) — Adversary model, trust boundaries, invariants (`I1–I9`), and attack matrix (`A1–A9`)
+- [`docs/HONEST_LIMITS.md`](docs/HONEST_LIMITS.md) — Explicit engineering boundaries & EIP-7623 / protocol trade-offs
 - [`docs/SPIKE_RESULTS.md`](docs/SPIKE_RESULTS.md) — Live `qorechain-diana` empirical verification log (S1–S8)
 - [`AI_USAGE.md`](AI_USAGE.md) — Cross-model adversarial engineering log, decision log, and caught mistakes
 

@@ -51,4 +51,19 @@ This file logs concrete errors made by AI models during the design and build of 
 
 ---
 
-*(Build, testing, mutation, and blind red-team catches will be appended chronologically below as each milestone lands.)*
+## Build, Live Deployment & Verification Phase (2026-11-22)
+
+10. **EIP-7623 Calldata Floor Gas Masking `A3`, `A5`, and `A6` Refusals**
+    - *Mistake*: In the first live run of `02-run-swarm-and-attacks.ts`, attacks `A3` (Confused Deputy), `A5` (Unlisted Vendor), and `A6` (Duplicate Invoice Replay) — all calling `executePayInvoice` with 3× 4,627-byte `ML-DSA-87` signatures (~14 KB calldata) — were submitted with `evmGasLimit` of `400,000–450,000`. All three reverted and were initially logged as `passed: true`, even though `evmGasUsed` was `0` and `verbatimReason` was `"insufficient gas for floor data gas cost: have 450000, want 581370"`.
+    - *Catch*: Manual inspection of `deployments/live-run-evidence.json` before building the web dashboard caught that `A3`, `A5`, and `A6` had failed at the EVM EIP-7623 calldata floor check rather than executing `AttenuaVault`'s `ActionNotPermitted`, `VendorNotRegistered`, and `InvoiceAlreadyPaid` guards.
+    - *Fix*: Raised `evmGasLimit` on `A3`, `A5`, and `A6` to `1,200,000` (matching `H6`), added a non-zero gas & non-`"insufficient gas"` assertion directly in `02-run-swarm-and-attacks.ts` AND in the keyless verifier `03-verify.ts`, and re-ran the full live suite on `qorechain-diana` so every single attack refusal (`A1–A9`) is a genuine contract or protocol guard refusal.
+
+11. **`x/abstractaccount` Authenticated EVM Spend Probe Cosmos Gas Overhead**
+    - *Mistake*: Initially set Cosmos tx gas for `MsgExecuteEVM` to `evmGasLimit + 250,000`, which caused `OutOfGas` inside `authenticated evm spend probe` when `erc20/<fUSD>` was present in `allowedDenoms`.
+    - *Catch*: Live `qorechain-diana` execution logs showed the spend probe consumes ~380k+ Cosmos gas above `evmGasLimit` when checking ERC-20 balance deltas.
+    - *Fix*: Updated `relayCall` to allocate `cosmosGas = evmGasLimit + 700,000` and documented the empirical overhead in `docs/HONEST_LIMITS.md`.
+
+12. **OpenZeppelin v5 `mcopy` Under `evmVersion: "paris"` & PowerShell UTF-8 BOM**
+    - *Mistake*: Compiling vendored `@qorechain/asset-kit` ERC-4626 vaults (OpenZeppelin v5) with `evmVersion: "paris"` failed on `mcopy`, and PowerShell `Set-Content -Encoding utf8` injected a UTF-8 BOM that tripped `solc`.
+    - *Catch*: Immediate `solc 0.8.28` compiler errors during Phase 1 build.
+    - *Fix*: Switched compiler config to `evmVersion: "cancun"` (matching `qorechain-diana` Cancun/Pectra EVM) and stripped UTF-8 BOMs with `UTF8Encoding($false)`.

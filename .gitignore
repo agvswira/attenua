@@ -8,6 +8,7 @@ artifacts/
 typechain-types/
 coverage/
 .next/
+*.tsbuildinfo
 
 # Secrets & throwaway keys — NEVER commit keys or mnemonics
 .env

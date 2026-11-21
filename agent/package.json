@@ -1,0 +1,32 @@
+{
+  "name": "@attenua/agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "tsx src/01-deploy-all.ts",
+    "run:live": "tsx src/02-run-swarm-and-attacks.ts",
+    "verify": "tsx src/03-verify.ts",
+    "mcp": "tsx src/mcp-server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.2.5",
+    "@cosmjs/stargate": "^0.33.1",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@noble/curves": "^1.8.1",
+    "@qorechain/asset-kit": "^0.1.0",
+    "@qorechain/evm": "^0.14.0",
+    "@qorechain/pqc": "^0.2.3",
+    "@qorechain/qoresign": "^0.2.0",
+    "@qorechain/sdk": "^0.14.0",
+    "dotenv": "^16.4.7",
+    "viem": "^2.23.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}
