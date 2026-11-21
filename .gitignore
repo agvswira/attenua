@@ -1,0 +1,27 @@
+# Dependencies & build outputs
+node_modules/
+dist/
+build/
+out/
+cache/
+artifacts/
+typechain-types/
+coverage/
+.next/
+
+# Secrets & throwaway keys — NEVER commit keys or mnemonics
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.mnemonic
+keys/
+secrets/
+
+# OS & editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

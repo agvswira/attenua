@@ -1,0 +1,28 @@
+{
+  "name": "@attenua/spike",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "compile": "tsx src/compile.ts",
+    "init": "tsx src/00-init-keys.ts",
+    "status": "tsx src/01-status.ts",
+    "deploy": "tsx src/02-deploy-probe.ts",
+    "spike": "tsx src/03-run-spike.ts"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.8.1",
+    "@qorechain/evm": "^0.14.0",
+    "@qorechain/pqc": "^0.2.3",
+    "@qorechain/qoresign": "^0.2.0",
+    "@qorechain/sdk": "^0.14.0",
+    "dotenv": "^16.4.7",
+    "solc": "^0.8.28",
+    "viem": "^2.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}
