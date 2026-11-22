@@ -45,9 +45,10 @@ contract AttenuaVault is ReentrancyGuard {
     IERC4626 public immutable liquidityVault;
     IERC4626 public immutable reserveVault;
     address public immutable rootOwner;
-    address public immutable monitorSigner;
+    address public monitorSigner;
 
     uint64 public rootEpoch;
+    uint64 public monitorNonce;
     bool public frozen;
 
     struct RootMandate {
@@ -128,11 +129,21 @@ contract AttenuaVault is ReentrancyGuard {
     );
     event VaultFrozen(address indexed monitor, uint64 nonce);
     event VaultUnfrozen(uint64 nonce);
+    event MonitorSignerUpdated(address indexed oldMonitor, address indexed newMonitor, uint64 nonce);
     event RootEpochRevoked(uint64 indexed newEpoch);
     event EmergencyWithdrawn(address indexed to, uint256 amount);
+    event EmergencyVaultsRedeemed(address indexed to, uint256 liqAssets, uint256 resAssets);
 
     // Errors
     error ZeroAddress();
+    error InvalidRoles();
+    error DuplicateVaults();
+    error InvalidVaultAsset(address vault);
+    error MonitorDisabled();
+    error InvalidMandateId();
+    error SelfDelegationNotAllowed();
+    error SeparationOfDutiesViolated();
+    error ActiveChildrenExist(bytes32 mandateId);
     error InvalidBand(uint16 minBps, uint16 maxBps);
     error VaultIsFrozen();
     error SignatureExpired(uint64 deadline, uint256 current);
@@ -174,6 +185,10 @@ contract AttenuaVault is ReentrancyGuard {
             rootOwner_ == address(0) ||
             monitorSigner_ == address(0)
         ) revert ZeroAddress();
+        if (rootOwner_ == monitorSigner_) revert InvalidRoles();
+        if (liquidityVault_ == reserveVault_) revert DuplicateVaults();
+        if (IERC4626(liquidityVault_).asset() != fusd_) revert InvalidVaultAsset(liquidityVault_);
+        if (IERC4626(reserveVault_).asset() != fusd_) revert InvalidVaultAsset(reserveVault_);
 
         fusd = IERC20(fusd_);
         liquidityVault = IERC4626(liquidityVault_);
@@ -350,6 +365,64 @@ contract AttenuaVault is ReentrancyGuard {
         emit EmergencyWithdrawn(to, amount);
     }
 
+    /// @notice Rotates or disables (address(0)) the classical monitor key using Owner ML-DSA-87.
+    function setMonitorSigner(
+        address newMonitor,
+        uint64 nonce,
+        uint64 deadline,
+        bytes calldata ownerPqcSig
+    ) external {
+        if (newMonitor == rootOwner) revert InvalidRoles();
+        _consumeNonceAndDeadline(rootOwner, nonce, deadline);
+
+        bytes memory digest = abi.encodePacked(
+            "attenua-v1|SET_MONITOR|",
+            block.chainid,
+            address(this),
+            rootEpoch,
+            newMonitor,
+            nonce,
+            deadline
+        );
+        PqcVerifier.verify(rootOwner, ownerPqcSig, digest);
+
+        address oldMonitor = monitorSigner;
+        monitorSigner = newMonitor;
+        emit MonitorSignerUpdated(oldMonitor, newMonitor, nonce);
+    }
+
+    /// @notice Redeems all LiquidityVault and ReserveVault shares to `to`, even while frozen (Owner ML-DSA-87 ONLY).
+    function emergencyRedeemVaults(
+        address to,
+        uint64 nonce,
+        uint64 deadline,
+        bytes calldata ownerPqcSig
+    ) external nonReentrant {
+        if (to == address(0)) revert ZeroAddress();
+        _consumeNonceAndDeadline(rootOwner, nonce, deadline);
+
+        bytes memory digest = abi.encodePacked(
+            "attenua-v1|EMERGENCY_REDEEM|",
+            block.chainid,
+            address(this),
+            rootEpoch,
+            to,
+            nonce,
+            deadline
+        );
+        PqcVerifier.verify(rootOwner, ownerPqcSig, digest);
+
+        uint256 liqShares = liquidityVault.balanceOf(address(this));
+        uint256 resShares = reserveVault.balanceOf(address(this));
+        uint256 liqAssets = liqShares > 0 ? liquidityVault.redeem(liqShares, address(this), address(this)) : 0;
+        uint256 resAssets = resShares > 0 ? reserveVault.redeem(resShares, address(this), address(this)) : 0;
+        uint256 total = liqAssets + resAssets;
+        if (total > 0) {
+            fusd.safeTransfer(to, total);
+        }
+        emit EmergencyVaultsRedeemed(to, liqAssets, resAssets);
+    }
+
     // =========================================================================
     // Monotonic Classical Freeze (Can ONLY Freeze, NEVER Unfreeze or Spend)
     // =========================================================================
@@ -359,7 +432,12 @@ contract AttenuaVault is ReentrancyGuard {
         uint64 deadline,
         bytes calldata monitorEcdsaSig
     ) external {
-        _consumeNonceAndDeadline(monitorSigner, nonce, deadline);
+        if (monitorSigner == address(0)) revert MonitorDisabled();
+        if (block.timestamp > deadline) revert SignatureExpired(deadline, block.timestamp);
+        if (nonce != monitorNonce) revert BadNonce(monitorSigner, monitorNonce, nonce);
+        unchecked {
+            monitorNonce = nonce + 1;
+        }
 
         bytes32 rawHash = keccak256(
             abi.encodePacked("attenua-v1|FREEZE|", block.chainid, address(this), rootEpoch, nonce, deadline)
@@ -389,6 +467,7 @@ contract AttenuaVault is ReentrancyGuard {
         bytes calldata parentPqcSig
     ) external {
         if (frozen) revert VaultIsFrozen();
+        if (mandateId == bytes32(0)) revert InvalidMandateId();
         if (subAgent == address(0)) revert ZeroAddress();
         if (subMandates[mandateId].issuer != address(0)) revert MandateAlreadyExists(mandateId);
         if (minLiquidityBps > maxLiquidityBps || maxLiquidityBps > MAX_BPS) {
@@ -420,6 +499,7 @@ contract AttenuaVault is ReentrancyGuard {
             childDepth = 1;
             rm.rootAllocated += budget;
         } else {
+            _requireOpenAncestors(parentId);
             SubMandate storage pm = subMandates[parentId];
             if (pm.issuer == address(0)) revert MandateNotFound(parentId);
             if (pm.closed) revert MandateClosed(parentId);
@@ -441,6 +521,7 @@ contract AttenuaVault is ReentrancyGuard {
             pm.allocated += budget;
         }
 
+        if (subAgent == issuer) revert SelfDelegationNotAllowed();
         _consumeNonceAndDeadline(issuer, nonce, deadline);
 
         bytes memory digest = abi.encodePacked(
@@ -502,6 +583,7 @@ contract AttenuaVault is ReentrancyGuard {
         if (sm.issuer == address(0)) revert MandateNotFound(mandateId);
         if (sm.closed) revert MandateClosed(mandateId);
         if (sm.epoch != rootEpoch) revert EpochMismatch(rootEpoch, sm.epoch);
+        if (sm.allocated != 0) revert ActiveChildrenExist(mandateId);
 
         _consumeNonceAndDeadline(sm.issuer, nonce, deadline);
 
@@ -516,6 +598,42 @@ contract AttenuaVault is ReentrancyGuard {
         );
         PqcVerifier.verify(sm.issuer, issuerPqcSig, digest);
 
+        _finalizeReclaim(mandateId, sm);
+    }
+
+    /// @notice Allows the Root Orchestrator to force-reclaim any leaf descendant without nuking the entire epoch.
+    function forceReclaimDescendant(
+        bytes32 mandateId,
+        uint64 nonce,
+        uint64 deadline,
+        bytes calldata orchestratorPqcSig
+    ) external {
+        RootMandate storage rm = rootMandate;
+        if (!rm.active || rm.epoch != rootEpoch) revert RootMandateInactive();
+
+        SubMandate storage sm = subMandates[mandateId];
+        if (sm.issuer == address(0)) revert MandateNotFound(mandateId);
+        if (sm.closed) revert MandateClosed(mandateId);
+        if (sm.epoch != rootEpoch) revert EpochMismatch(rootEpoch, sm.epoch);
+        if (sm.allocated != 0) revert ActiveChildrenExist(mandateId);
+
+        _consumeNonceAndDeadline(rm.orchestrator, nonce, deadline);
+
+        bytes memory digest = abi.encodePacked(
+            "attenua-v1|FORCE_RECLAIM|",
+            block.chainid,
+            address(this),
+            rootEpoch,
+            mandateId,
+            nonce,
+            deadline
+        );
+        PqcVerifier.verify(rm.orchestrator, orchestratorPqcSig, digest);
+
+        _finalizeReclaim(mandateId, sm);
+    }
+
+    function _finalizeReclaim(bytes32 mandateId, SubMandate storage sm) internal {
         uint256 unspent = sm.budget - sm.spent - sm.allocated;
         sm.closed = true;
 
@@ -630,10 +748,11 @@ contract AttenuaVault is ReentrancyGuard {
         uint256 remaining = sm.budget - sm.spent - sm.allocated;
         if (amount > remaining) revert SubMandateBudgetExceeded(amount, remaining);
 
-        // Verify Research sub-agent holds an active zero-budget mandate in the same rootEpoch
+        // Verify Research sub-agent holds a root-issued, active zero-budget mandate in the same rootEpoch
         SubMandate storage rm = subMandates[researchMandateId];
         if (
             rm.issuer == address(0) ||
+            rm.parentId != bytes32(0) ||
             rm.closed ||
             rm.epoch != rootEpoch ||
             block.timestamp > rm.expiry ||
@@ -641,6 +760,9 @@ contract AttenuaVault is ReentrancyGuard {
             rm.actionMask != BIT_NONE
         ) {
             revert InvalidResearchMandate(researchMandateId);
+        }
+        if (rm.subAgent == sm.subAgent || rm.subAgent == vendor || sm.subAgent == vendor) {
+            revert SeparationOfDutiesViolated();
         }
 
         bytes32 invoiceKey = keccak256(abi.encodePacked(vendor, invoiceId));
@@ -725,6 +847,23 @@ contract AttenuaVault is ReentrancyGuard {
         if (sm.epoch != rootEpoch) revert EpochMismatch(rootEpoch, sm.epoch);
         if (block.timestamp > sm.expiry) revert MandateExpired(sm.expiry, block.timestamp);
         if ((sm.actionMask & requiredBit) == 0) revert ActionNotPermitted(requiredBit, sm.actionMask);
+        _requireOpenAncestors(sm.parentId);
+    }
+
+    function _requireOpenAncestors(bytes32 parentId) internal view {
+        bytes32 cursor = parentId;
+        uint8 hops;
+        while (cursor != bytes32(0)) {
+            SubMandate storage anc = subMandates[cursor];
+            if (anc.issuer == address(0)) revert MandateNotFound(cursor);
+            if (anc.closed) revert MandateClosed(cursor);
+            if (anc.epoch != rootEpoch) revert EpochMismatch(rootEpoch, anc.epoch);
+            cursor = anc.parentId;
+            unchecked {
+                hops += 1;
+            }
+            if (hops > 16) break;
+        }
     }
 
     function _consumeNonceAndDeadline(address signer, uint64 nonce, uint64 deadline) internal {

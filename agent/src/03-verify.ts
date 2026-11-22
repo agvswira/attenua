@@ -140,7 +140,7 @@ async function main() {
     );
     check(
       "Adversarial Attack Suite (genuine on-chain guard refusals, non-OOG)",
-      attacksOk && (ev.attacks?.length ?? 0) >= 9,
+      attacksOk && (ev.attacks?.length ?? 0) >= 10,
       `${ev.attacks?.filter((x: { passed: boolean; evmGasUsed?: string; verbatimReason?: string }) => x.passed && Number(x.evmGasUsed ?? "0") > 0 && !(x.verbatimReason ?? "").toLowerCase().includes("insufficient gas")).length}/${ev.attacks?.length} genuine refusals`
     );
   }

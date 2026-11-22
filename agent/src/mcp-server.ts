@@ -38,11 +38,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
   ],
 }));
 
-server.setRequestHandler(CallToolRequestSchema, async (req) => {
-  const dep = JSON.parse(fs.readFileSync(DEPLOYMENT_FILE, "utf8"));
-  const evm = createEvmPublicClient();
+function loadDeploymentManifest() {
+  if (!fs.existsSync(DEPLOYMENT_FILE)) {
+    throw new Error(`Deployment manifest not found at ${DEPLOYMENT_FILE}`);
+  }
+  return JSON.parse(fs.readFileSync(DEPLOYMENT_FILE, "utf8"));
+}
 
+server.setRequestHandler(CallToolRequestSchema, async (req) => {
   if (req.params.name === "get_vault_state") {
+    const dep = loadDeploymentManifest();
+    const evm = createEvmPublicClient();
     const addr = dep.contracts.attenuaVault.address as `0x${string}`;
     const [epoch, frozen, rm, summary] = await Promise.all([
       evm.readContract({ address: addr, abi: VAULT_ABI, functionName: "rootEpoch" }),
@@ -88,6 +94,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   }
 
   if (req.params.name === "get_protocol_guardrails") {
+    const dep = loadDeploymentManifest();
     const aa1 = dep.abstractAccounts.ownerTreasuryAA1.cosmos as string;
     const aa2 = dep.abstractAccounts.monitorAA2.cosmos as string;
     const [win1, auth1, rules1, auth2, rules2] = await Promise.all([

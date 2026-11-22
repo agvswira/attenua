@@ -42,6 +42,7 @@ import {
 
 const VAULT_ABI = parseAbi([
   "function rootEpoch() view returns (uint64)",
+  "function monitorNonce() view returns (uint64)",
   "function frozen() view returns (bool)",
   "function nonces(address) view returns (uint64)",
   "function portfolioSummary() view returns (uint256,uint256,uint256,uint256)",
@@ -148,6 +149,8 @@ async function main() {
     evm.readContract({ address: vault, abi: VAULT_ABI, functionName: "nonces", args: [addr] });
   const getEpoch = () =>
     evm.readContract({ address: vault, abi: VAULT_ABI, functionName: "rootEpoch" });
+  const getMonitorNonce = () =>
+    evm.readContract({ address: vault, abi: VAULT_ABI, functionName: "monitorNonce" });
 
   console.log(`=== Attenua Live Swarm + 9-Attack Suite on ${CHAIN_ID} ===`);
   console.log(`AttenuaVault: ${vault}\n`);
@@ -883,6 +886,67 @@ async function main() {
     console.log(`[A6] ${genuineRefusal ? "REFUSED (PASS)" : "FAIL/GAS-FLOOR"} (gas=${r.evmGasUsed}) — tx=${r.txHash}`);
   }
 
+  // A10: Self-Delegated Zero-Budget Clearance Bypass (Blind Audit H-01 regression guard)
+  {
+    const epoch = await getEpoch();
+    const pNonce = await getNonce(acc.payables.evm as `0x${string}`);
+    const forgedResearchId = keccak256(toHex(`attenua-forged-res-${Date.now()}`));
+    const selfSig = signSubMandate({
+      chainId,
+      vault,
+      rootEpoch: epoch,
+      mandateId: forgedResearchId,
+      parentId: payMandateId,
+      subAgent: acc.payables.evm as `0x${string}`,
+      budget: 0n,
+      minLiquidityBps: 4500,
+      maxLiquidityBps: 6500,
+      actionMask: 0,
+      expiry: childExpiry,
+      nonce: pNonce,
+      deadline,
+      issuerPqcSecret: acc.payables.pqc.secretKey,
+    });
+    const r = await relayCall({
+      relayer: acc.relayer,
+      accountCosmos: acc.owner.cosmos,
+      authPriv: acc.orchestratorEdPriv,
+      to: vault,
+      data: encodeFunctionData({
+        abi: VAULT_ABI,
+        functionName: "registerSubMandate",
+        args: [
+          forgedResearchId,
+          payMandateId,
+          acc.payables.evm as `0x${string}`,
+          0n,
+          4500,
+          6500,
+          0,
+          childExpiry,
+          pNonce,
+          deadline,
+          selfSig,
+        ],
+      }),
+      evmGasLimit: 480_000n,
+      memo: "attenua: A10 self-delegated zero-budget clearance bypass (H-01)",
+    });
+    const genuineRefusal = r.failed && BigInt(r.evmGasUsed) > 0n && !r.reason.toLowerCase().includes("insufficient gas");
+    attacks.push({
+      id: "A10",
+      title: "Self-Delegated Zero-Budget Clearance Bypass (Audit H-01)",
+      actor: "Hijacked Payables",
+      layer: "AttenuaVault (SelfDelegationNotAllowed / SeparationOfDuties)",
+      passed: genuineRefusal,
+      txHash: r.txHash,
+      evmGasUsed: r.evmGasUsed,
+      summary: "Refused on-chain: Payables cannot self-delegate a zero-budget Research mandate",
+      verbatimReason: r.reason,
+    });
+    console.log(`[A10] ${genuineRefusal ? "REFUSED (PASS)" : "FAIL/GAS-FLOOR"} (gas=${r.evmGasUsed}) — tx=${r.txHash}`);
+  }
+
   // A7: JIT Protocol Ceiling Breach (11 fUSD > 10 fUSD per-tx denom_limits on Owner AA #1)
   {
     const data = encodeFunctionData({
@@ -916,7 +980,7 @@ async function main() {
   // A8: Monotonic Classical Freeze via Isolated AA #2 Monitor -> blocks spend -> Monitor cannot unfreeze -> Owner ML-DSA unfreezes
   {
     const epoch = await getEpoch();
-    const monNonce = await getNonce(acc.monitorAccount.evm as `0x${string}`);
+    const monNonce = await getMonitorNonce();
     const freezeSig = await signMonitorFreeze({
       chainId,
       vault,

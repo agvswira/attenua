@@ -1,3 +1,5 @@
+import { EVIDENCE } from "./chain";
+
 export interface InvariantSpec {
   id: string;
   title: string;
@@ -5,6 +7,9 @@ export interface InvariantSpec {
   enforcedBy: string;
   chips: Array<{ id: string; kind: "attack" | "run" | "check" }>;
 }
+
+const h6GasNum = Number(EVIDENCE.happyPath.find((h) => h.id === "H6")?.evmGasUsed ?? "638947");
+const h6GasFormatted = h6GasNum.toLocaleString();
 
 export const INVARIANTS: InvariantSpec[] = [
   {
@@ -62,12 +67,13 @@ export const INVARIANTS: InvariantSpec[] = [
     id: "I6",
     title: "3-signature invoice settlement",
     description:
-      "Payables, Vendor and Research sign each invoice in one call (H6: 638,947 gas).",
+      `Payables, Vendor and Research sign each invoice in one call (H6: ${h6GasFormatted} gas).`,
     enforcedBy: "AttenuaVault + 3× pqcVerify",
     chips: [
       { id: "H6", kind: "run" },
       { id: "A5", kind: "attack" },
       { id: "A6", kind: "attack" },
+      { id: "A10", kind: "attack" },
     ],
   },
   {

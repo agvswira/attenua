@@ -4,6 +4,10 @@
 
 > *"Quantum-safe infrastructure is a fiduciary requirement."*
 
+- **Live Demo Dashboard**: [`https://attenua.vercel.app/`](https://attenua.vercel.app/)
+- **Cover Visual**: [`docs/assets/attenua-cover-16x9.png`](docs/assets/attenua-cover-16x9.png)
+- **Network**: QoreChain `qorechain-diana` (EVM Chain ID `9800`)
+
 ## Problem
 
 Production AI agents do not operate alone — an **Orchestrator** agent spawns specialized **Sub-Agents** (*Allocator*, *Payables*, *Research*). Sharing one linked key across sub-agents allows a single prompt-injected sub-agent to drain the entire allowance; requiring a human owner's cold `ML-DSA-87` signature for every sub-task breaks autonomy.
@@ -30,25 +34,27 @@ Production AI agents do not operate alone — an **Orchestrator** agent spawns s
 
 ## Live Deployment on `qorechain-diana` (EVM Chain ID `9800`)
 
-Full manifest in [`deployments/qorechain-diana.json`](deployments/qorechain-diana.json) and live 3-sub-agent swarm + 9-attack proof in [`deployments/live-run-evidence.json`](deployments/live-run-evidence.json):
+Full manifest in [`deployments/qorechain-diana.json`](deployments/qorechain-diana.json) and live 3-sub-agent swarm + 10-attack proof in [`deployments/live-run-evidence.json`](deployments/live-run-evidence.json):
 
 | Contract / Account | Address | Hardening Status |
 |---|---|---|
-| `AttenuaVault` | `0x4518ef0ddf04b2be51370045bf8154cce8cef7c4` | Zero `msg.sender` trust; per-action `ML-DSA-87` via `0x...0a01` & `0x...0a02` |
-| `QoreChainHybridHolderGuard` | `0x3535f314f62b96a55f584e27257eb8a2001bdfb0` | `exempt(AttenuaVault) = true`; `owner = 0x0000...0000` (renounced); Owner EVM window closed (`live = false`) |
-| `LiquidityVault` (ERC-4626 `fUSD`) | `0x89e59628b800ef17b55b7b81891d1de82c4185c3` | Apache-2.0 `@qorechain/asset-kit` `QoreChainRwaVault` |
-| `ReserveVault` (ERC-4626 `fUSD`) | `0xf09b664c39457ff01356a35ad2fc6fe5e2113cb3` | Apache-2.0 `@qorechain/asset-kit` `QoreChainRwaVault` |
+| `AttenuaVault` (v1.1) | `0xf585fc6e1e43446f353830e0d11ff44ce747af58` | Zero `msg.sender` trust; per-action `ML-DSA-87`; v1.1 blind-audit hardened (`H-01..H-03`, `L-04`) |
+| `QoreChainHybridHolderGuard` | `0xf70c001e482a1112ec76684ddec4ffe3bff4c652` | `exempt(AttenuaVault) = true`; `owner = 0x0000...0000` (renounced); Owner EVM window closed (`live = false`) |
+| `LiquidityVault` (ERC-4626 `fUSD`) | `0xb5cf1d53872255bed60ebb731e9043b7c9ff2c8b` | Apache-2.0 `@qorechain/asset-kit` `QoreChainRwaVault` |
+| `ReserveVault` (ERC-4626 `fUSD`) | `0x5b914270db69cee65762c75edf1e1ce2856cc72b` | Apache-2.0 `@qorechain/asset-kit` `QoreChainRwaVault` |
 | Owner Treasury (AA #1) | `qor1k4xryjqufhdh44hgsqdpj5llr7y3dwyfenxfqg` | Single-linked-key invariant (Orchestrator only); `fUSD` cap `10/tx`, `25/day` |
 | Isolated Monitor (AA #2) | `qor10vv75f5qwca5hra7ye0vxwemz2t6q6lv28m7d4` | `0 fUSD`, `1 uqor/day`, locked to `AttenuaVault.freeze()` (`0xbd2d305f`) only |
 
-## Quick Keyless Verification (Zero Private Keys Required)
+## Quick Keyless Verification & Automated Test Suite
 
-Verify live `qorechain-diana` contract bytecode, renounced guard ownership, closed EVM window, AA #1 / AA #2 isolation, registered `ML-DSA-87` keys, and recorded `H1–H7` + `A1–A9` proofs directly against the testnet:
+Verify live `qorechain-diana` contract bytecode, renounced guard ownership, closed EVM window, AA #1 / AA #2 isolation, registered `ML-DSA-87` keys, and recorded `H1–H7` + `A1–A10` proofs without any private keys:
 
 ```bash
 cd agent
 npm install
-npm run verify
+npm run verify      # 19/19 read-only live checks on qorechain-diana
+npm test            # 14 ML-DSA-87 helpers, 200 property/fuzz runs, screener & live invariants
+npm run screen:demo # Run Research prompt-injection screener against live chain state
 ```
 
 ### Run the Web Dashboard & Read-Only Live Attack Theatre
@@ -68,10 +74,13 @@ Before locking [`docs/SPEC.md`](docs/SPEC.md), all 8 protocol assumptions were t
 ## Documentation
 
 - [`docs/SPEC.md`](docs/SPEC.md) — Post-spike architecture specification
-- [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) — Adversary model, trust boundaries, invariants (`I1–I9`), and attack matrix (`A1–A9`)
-- [`docs/HONEST_LIMITS.md`](docs/HONEST_LIMITS.md) — Explicit engineering boundaries & EIP-7623 / protocol trade-offs
+- [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) — Adversary model, trust boundaries, invariants (`I1–I9`), and attack matrix (`A1–A10`)
+- [`docs/HONEST_LIMITS.md`](docs/HONEST_LIMITS.md) — Explicit engineering boundaries & deferred audit trade-offs
 - [`docs/SPIKE_RESULTS.md`](docs/SPIKE_RESULTS.md) — Live `qorechain-diana` empirical verification log (S1–S8)
-- [`AI_USAGE.md`](AI_USAGE.md) — Cross-model adversarial engineering log, decision log, and caught mistakes
+- [`docs/ai/BLIND_RED_TEAM.md`](docs/ai/BLIND_RED_TEAM.md) — Zero-context blind security audit & v1.1 remediation matrix
+- [`docs/ai/AGENT_SESSION.md`](docs/ai/AGENT_SESSION.md) — Live `Research` sub-agent prompt-injection screening transcript
+- [`docs/SUBMISSION_PACK.md`](docs/SUBMISSION_PACK.md) — Submission details & 3-minute demo video script
+- [`AI_USAGE.md`](AI_USAGE.md) — Cross-model adversarial engineering log (`Gemini 4 Neon` & `Claude Opus 5.5`), decision log, and caught mistakes
 
 ## Credits & License
 

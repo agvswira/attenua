@@ -323,3 +323,101 @@ export async function signMonitorFreeze(params: {
   const account = privateKeyToAccount(params.monitorPrivateKeyHex as `0x${string}`);
   return account.signMessage({ message: { raw: rawHash } });
 }
+
+export function signEmergencyWithdraw(params: {
+  chainId: bigint;
+  vault: `0x${string}`;
+  rootEpoch: bigint;
+  to: `0x${string}`;
+  amount: bigint;
+  nonce: bigint;
+  deadline: bigint;
+  ownerPqcSecret: Uint8Array;
+}): `0x${string}` {
+  const packed = encodePacked(
+    ["string", "uint256", "address", "uint64", "address", "uint256", "uint64", "uint64"],
+    [
+      "attenua-v1|EMERGENCY_WITHDRAW|",
+      params.chainId,
+      params.vault,
+      params.rootEpoch,
+      params.to,
+      params.amount,
+      params.nonce,
+      params.deadline,
+    ]
+  );
+  return signPackedPqc(params.ownerPqcSecret, packed);
+}
+
+export function signSetMonitorSigner(params: {
+  chainId: bigint;
+  vault: `0x${string}`;
+  rootEpoch: bigint;
+  newMonitor: `0x${string}`;
+  nonce: bigint;
+  deadline: bigint;
+  ownerPqcSecret: Uint8Array;
+}): `0x${string}` {
+  const packed = encodePacked(
+    ["string", "uint256", "address", "uint64", "address", "uint64", "uint64"],
+    [
+      "attenua-v1|SET_MONITOR|",
+      params.chainId,
+      params.vault,
+      params.rootEpoch,
+      params.newMonitor,
+      params.nonce,
+      params.deadline,
+    ]
+  );
+  return signPackedPqc(params.ownerPqcSecret, packed);
+}
+
+export function signEmergencyRedeemVaults(params: {
+  chainId: bigint;
+  vault: `0x${string}`;
+  rootEpoch: bigint;
+  to: `0x${string}`;
+  nonce: bigint;
+  deadline: bigint;
+  ownerPqcSecret: Uint8Array;
+}): `0x${string}` {
+  const packed = encodePacked(
+    ["string", "uint256", "address", "uint64", "address", "uint64", "uint64"],
+    [
+      "attenua-v1|EMERGENCY_REDEEM|",
+      params.chainId,
+      params.vault,
+      params.rootEpoch,
+      params.to,
+      params.nonce,
+      params.deadline,
+    ]
+  );
+  return signPackedPqc(params.ownerPqcSecret, packed);
+}
+
+export function signForceReclaimDescendant(params: {
+  chainId: bigint;
+  vault: `0x${string}`;
+  rootEpoch: bigint;
+  mandateId: `0x${string}`;
+  nonce: bigint;
+  deadline: bigint;
+  orchestratorPqcSecret: Uint8Array;
+}): `0x${string}` {
+  const packed = encodePacked(
+    ["string", "uint256", "address", "uint64", "bytes32", "uint64", "uint64"],
+    [
+      "attenua-v1|FORCE_RECLAIM|",
+      params.chainId,
+      params.vault,
+      params.rootEpoch,
+      params.mandateId,
+      params.nonce,
+      params.deadline,
+    ]
+  );
+  return signPackedPqc(params.orchestratorPqcSecret, packed);
+}

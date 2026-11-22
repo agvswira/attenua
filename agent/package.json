@@ -7,7 +7,9 @@
     "deploy": "tsx src/01-deploy-all.ts",
     "run:live": "tsx src/02-run-swarm-and-attacks.ts",
     "verify": "tsx src/03-verify.ts",
+    "screen:demo": "tsx src/04-run-research-session.ts",
     "mcp": "tsx src/mcp-server.ts",
+    "test": "tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

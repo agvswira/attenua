@@ -2,8 +2,8 @@ import { createPublicClient, http, parseAbi, type Address } from "viem";
 import deployment from "@deployments/qorechain-diana.json";
 import evidence from "@deployments/live-run-evidence.json";
 
-export const EVM_RPC_URL = "https://evm-diana.qorechain.io";
-export const REST_URL = "https://rest-diana.qorechain.io";
+export const EVM_RPC_URL = "https://evm-testnet.qore.host";
+export const REST_URL = "https://api-testnet.qore.host";
 export const EXPLORER_BASE = "https://dashboard.qorechain.io/explorer";
 
 export type DeploymentManifest = typeof deployment;
@@ -153,6 +153,7 @@ const CONTEXT_MAP: Record<string, string> = {
   A7: "tests I7, No standing allowance",
   A8: "tests I3, Isolated freeze-only monitor",
   A9: "tests I9, O(1) post-quantum kill-switch",
+  A10: "tests I6, H-01 self-delegated Research clearance bypass",
   H1: "root IPS mandate setup",
   H2: "proven vendor onboarding",
   H3: "tests I7, No standing allowance",
@@ -331,12 +332,14 @@ export async function fetchLiveChainSnapshot(): Promise<LiveChainSnapshot> {
     publicClient.readContract({ address: guardAddr, abi: GUARD_ABI, functionName: "owner" }),
     publicClient.readContract({ address: guardAddr, abi: GUARD_ABI, functionName: "exempt", args: [vaultAddr] }),
     publicClient.readContract({ address: fusdAddr, abi: ERC20_ABI, functionName: "balanceOf", args: [monitorEvm] }),
-    fetch(`${REST_URL}/qorechain/pqc/v1/evm_window/${ownerCosmos}`).then((r) => r.json()) as Promise<{
+    fetch(`${REST_URL}/qorechain/pqc/v1/evm_window/${ownerCosmos}`)
+      .then((r) => (r.ok ? r.json() : {}))
+      .catch(() => ({})) as Promise<{
       live?: boolean;
     }>,
-    fetch(`${REST_URL}/qorechain/abstractaccount/v1/account/${ownerCosmos}/authenticators`).then((r) =>
-      r.json(),
-    ) as Promise<{
+    fetch(`${REST_URL}/qorechain/abstractaccount/v1/account/${ownerCosmos}/authenticators`)
+      .then((r) => (r.ok ? r.json() : {}))
+      .catch(() => ({})) as Promise<{
       authenticators?: Array<{ active?: boolean }>;
     }>,
   ]);

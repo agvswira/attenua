@@ -34,11 +34,11 @@ flowchart LR
 1. **AI Building Attenua** (this document + `docs/ai/`):
    - Protocol verification against live `qorechain-diana` endpoints, SDK types, and `qorechain-asset-kit` source & licence files.
    - Adversarial architecture review (`docs/ai/DECISION_LOG.md`) and error-catching log (`docs/ai/MISTAKES_AND_CATCHES.md`).
-   - Step 0 Testnet Spike (`docs/SPIKE_RESULTS.md`), Solidity contracts, unit/fuzz/invariant/mutation test suites, and a blind post-freeze AI red-team audit (`docs/ai/BLIND_RED_TEAM.md`, to be executed once MVP contracts freeze).
+   - Step 0 Testnet Spike (`docs/SPIKE_RESULTS.md`), Solidity contracts (`AttenuaVault` v1.1), automated unit/property/live-invariant tests ([`agent/test/attenua.test.ts`](agent/test/attenua.test.ts)), and a zero-context blind AI red-team audit ([`docs/ai/BLIND_RED_TEAM.md`](docs/ai/BLIND_RED_TEAM.md)).
 2. **AI Running Inside Attenua** (runtime agents):
    - **Orchestrator Agent**: Treasury desk coordinator reading live chain state and research briefs, drawing JIT working capital inside `x/abstractaccount` bounds, and issuing strictly attenuated `ML-DSA-87` sub-mandates.
    - **Research Sub-Agent (Zero-Budget)**: Uses `@qorechain/mcp` (read-only) to inspect Diana state and screen unstructured vendor invoices for prompt injections and anomalies, signing structured clearance verdicts without ever being capable of spending `1 uqor`.
-   - Runtime transcripts of real LLM sessions facing live prompt-injected invoices will be recorded in `docs/ai/AGENT_SESSION.md`.
+   - Live screener session transcript facing prompt-injected invoices is recorded in [`docs/ai/AGENT_SESSION.md`](docs/ai/AGENT_SESSION.md).
 
 ---
 
@@ -48,7 +48,7 @@ flowchart LR
 |---|---|---|
 | Architecture & threat modeling | Explored candidate concepts; cross-examined trust models, oracle dependencies, and post-quantum threat horizons | Enforced product-market coherence and ethical standards; rejected concepts with weak trust models or disproportionate scope; selected the *Attenua* + institutional treasury fusion |
 | Protocol & kit verification | Queried live `api-testnet.qore.host`, inspected `@qorechain/sdk` types and `qorechain-asset-kit` source/licences | Verified findings independently, resolved conflicting model claims, enforced "Step 0 Spike before final spec" rule |
-| Smart contracts & tests | Drafted `SpikeProbe.sol`, `AttenuaVault.sol`, tests, fuzz/invariant/mutation suites *(in progress)* | Reviews all security invariants, approves deployments and public commits |
+| Smart contracts & tests | Drafted `SpikeProbe.sol`, `AttenuaVault.sol` (v1.1), automated tests & 200-run property/fuzz checks (`agent/test/attenua.test.ts`), and zero-context blind audit (`docs/ai/BLIND_RED_TEAM.md`) | Reviews all security invariants, approves deployments and public commits |
 | Keys, faucet, & fest submission | Generates scripts that keep throwaway keys outside the repo (`~/.config/attenua-spike/`) | Funds throwaway testnet accounts via faucet, connects QoreX/GitHub/X, records demo video |
 
 ---
@@ -79,3 +79,4 @@ Full details with evidence live in [`docs/ai/DECISION_LOG.md`](docs/ai/DECISION_
 - **2026-11-22 — Phase 3 Web Dashboard & Read-Only Live Attack Theatre (`web/`)**: Built a zero-key Vite + React + TypeScript dashboard displaying live `qorechain-diana` contract/account state, the hierarchical delegation tree, the `@qorechain/asset-kit` treasury desk, and the `A1–A9` Attack Theatre with a native `<dialog>` evidence inspector, following `modern-web-guidance` (cascade layers, `light-dark()` + fallbacks, `@container` responsive table, accessible landmarks & focus).
 - **2026-11-22 — Security Documentation**: Authored [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) and [`docs/HONEST_LIMITS.md`](docs/HONEST_LIMITS.md).
 - **2026-11-22 — Figma Design Implementation & Motion Polish (`web/`)**: Implemented the user-authored Figma design (`Overview · Light`, `Overview · Dark`, `Inspector · A5 open`, `Data states`, nested-chevron SVG brand mark & vector connectors) with full `/modern-web-guidance` adherence (smooth scrolling, CSS scroll-progress bar, `view()` scroll reveals, compositor-only transitions, accessible `<dialog>` inspector, and responsive `@container` tables).
+- **2026-11-22 — Blind Security Audit (`docs/ai/BLIND_RED_TEAM.md`), `AttenuaVault` v1.1 Hardening, Test Suite, Agent Session & Live Dashboard Fix**: Executed a zero-context blind audit uncovering `H-01` (self-delegated zero-budget Research clearance bypass), `H-02` (parent reclaim with open descendants), and `H-03` (immutable `monitorSigner` freeze trap). Patched all three High findings + `M-03` (`bytes32(0)` block) + `L-04` (separate `monitorNonce`), redeployed `AttenuaVault` v1.1 (`0xf585fc6e1e43446f353830e0d11ff44ce747af58`), added live Attack `A10` proving `H-01` refusal (`131,159` gas), added interactive QoreX / `HolderGuard` / `pqcKeyStatus` wallet posture inspector & fixed `@qorechain/sdk` live testnet RPC URLs (`evm-testnet.qore.host`) in `web/`, captured live Research screening transcript ([`docs/ai/AGENT_SESSION.md`](docs/ai/AGENT_SESSION.md)), generated a 16:9 cover visual ([`docs/assets/attenua-cover-16x9.png`](docs/assets/attenua-cover-16x9.png)), and added automated `npm test` covering 14 `ML-DSA-87` helpers + 200 property/fuzz trials (`7/7 PASS`, `npm run verify`: `19/19 PASS`).

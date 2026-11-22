@@ -1,4 +1,4 @@
-import { DEPLOYMENT, formatBps, shortAddr, type LiveChainSnapshot } from "../lib/chain";
+import { DEPLOYMENT, EVIDENCE, formatBps, shortAddr, type LiveChainSnapshot } from "../lib/chain";
 import { EvidenceChip } from "./EvidenceChip";
 import junctionLight from "../assets/junction-light.svg";
 import junctionDark from "../assets/junction-dark.svg";
@@ -24,7 +24,8 @@ export function CapabilityTree({ effectiveTheme, live, onInspect }: CapabilityTr
 
   const liquidityPct = live ? Math.min(100, Math.max(0, live.liquidityBps / 100)) : 50;
   const liquidityPctText = live ? formatBps(live.liquidityBps) : "50.00%";
-  const rootEpoch = live ? live.rootEpoch : 3;
+  const rootEpoch = live ? live.rootEpoch : 2;
+  const revokeGas = Number(EVIDENCE.attacks.find((a) => a.id === "A9")?.evmGasUsed ?? "212385").toLocaleString();
 
   return (
     <section
@@ -260,6 +261,7 @@ export function CapabilityTree({ effectiveTheme, live, onInspect }: CapabilityTr
                 <EvidenceChip id="A3" kind="attack" onInspect={onInspect} />
                 <EvidenceChip id="A5" kind="attack" onInspect={onInspect} />
                 <EvidenceChip id="A6" kind="attack" onInspect={onInspect} />
+                <EvidenceChip id="A10" kind="attack" onInspect={onInspect} />
               </div>
             </article>
 
@@ -315,8 +317,8 @@ export function CapabilityTree({ effectiveTheme, live, onInspect }: CapabilityTr
             </div>
 
             <p className="node-copy">
-              revokeRootEpoch() voids every sub-mandate in one call (212,385 gas) and revokes the linked
-              key.
+              revokeRootEpoch() voids every sub-mandate in one call ({revokeGas} gas) and revokes the
+              linked key.
             </p>
 
             <div className="chip-row">

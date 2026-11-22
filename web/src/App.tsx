@@ -269,7 +269,7 @@ export function App() {
   const totalAum = liquidityAssets + reserveAssets + idleAssets;
   const liquidityPct = live ? Math.min(100, Math.max(0, live.liquidityBps / 100)) : 50;
   const liquidityPctText = live ? formatBps(live.liquidityBps) : "50.00%";
-  const rootEpoch = live ? live.rootEpoch : 3;
+  const rootEpoch = live ? live.rootEpoch : 2;
   const isFrozen = live ? live.frozen : false;
 
   return (

@@ -205,12 +205,12 @@ async function main() {
   const reserveVaultAddr = resRcpt.contractAddress;
   console.log(`[DEPLOY] ReserveVault (ERC-4626)    = ${reserveVaultAddr} (gasUsed=${resRcpt.gasUsed})`);
 
-  // Deploy 4: AttenuaVault
+  // Deploy 4: AttenuaVault v1.1
   const vaultTx = await evmWallet.deployContract({
     abi: attenuaArt.abi,
     bytecode: attenuaArt.bytecode,
     args: [FUSD_EVM_ADDRESS, liquidityVaultAddr, reserveVaultAddr, acc.owner.evm, acc.monitorAccount.evm],
-    gas: 4_800_000n,
+    gas: 5_200_000n,
   });
   const vaultRcpt = await evmPublic.waitForTransactionReceipt({ hash: vaultTx });
   if (!vaultRcpt.contractAddress || vaultRcpt.status !== "success") throw new Error("AttenuaVault deploy failed");
@@ -316,6 +316,9 @@ async function main() {
   const selRevokeEpoch = `0x${sels["revokeRootEpoch(uint64,uint64,bytes)"]}`;
   const selUnfreeze = `0x${sels["unfreeze(uint64,uint64,bytes)"]}`;
   const selFreeze = `0x${sels["freeze(uint64,uint64,bytes)"]}`;
+  const selForceReclaim = `0x${sels["forceReclaimDescendant(bytes32,uint64,uint64,bytes)"]}`;
+  const selSetMonitor = `0x${sels["setMonitorSigner(address,uint64,uint64,bytes)"]}`;
+  const selEmergRedeem = `0x${sels["emergencyRedeemVaults(address,uint64,uint64,bytes)"]}`;
 
   const expiryUnix = Math.floor(Date.now() / 1000) + 14 * 24 * 3600;
   const orchProof = signAuthenticatorLinkEd25519({
@@ -358,6 +361,9 @@ async function main() {
           `${attenuaVaultAddr}/${selPay}`,
           `${attenuaVaultAddr}/${selRevokeEpoch}`,
           `${attenuaVaultAddr}/${selUnfreeze}`,
+          `${attenuaVaultAddr}/${selForceReclaim}`,
+          `${attenuaVaultAddr}/${selSetMonitor}`,
+          `${attenuaVaultAddr}/${selEmergRedeem}`,
         ],
       },
     }),
@@ -481,6 +487,9 @@ async function main() {
       revokeRootEpoch: selRevokeEpoch,
       unfreeze: selUnfreeze,
       freeze: selFreeze,
+      forceReclaimDescendant: selForceReclaim,
+      setMonitorSigner: selSetMonitor,
+      emergencyRedeemVaults: selEmergRedeem,
     },
   };
 

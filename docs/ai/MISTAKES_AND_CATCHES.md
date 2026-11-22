@@ -69,3 +69,13 @@ This log records concrete errors made by AI models during the design and build o
     - *Mistake*: Compiling vendored `@qorechain/asset-kit` ERC-4626 vaults (OpenZeppelin v5) with `evmVersion: "paris"` failed on `mcopy`, and PowerShell `Set-Content -Encoding utf8` injected a UTF-8 BOM that tripped `solc`.
     - *Catch*: Immediate `solc 0.8.28` compiler errors during Phase 1 build.
     - *Fix*: Switched compiler config to `evmVersion: "cancun"` (matching `qorechain-diana` Cancun/Pectra EVM) and stripped UTF-8 BOMs with `UTF8Encoding($false)`.
+
+13. **Stale Non-SDK Testnet Hostnames in Browser Dashboard (`evm-diana.qorechain.io` vs `@qorechain/sdk`)**
+    - *Mistake*: Hardcoded `https://evm-diana.qorechain.io` and `https://rest-diana.qorechain.io` in `web/src/lib/chain.ts`, causing browser live RPC reads on `https://attenua.vercel.app/` to fail name resolution and stay in `"RPC unreachable · showing recorded run"` fallback.
+    - *Catch*: Querying `qorechain-diana` directly via those URLs returned DNS failure; reading `@qorechain/sdk/dist/index.js` revealed QoreChain's official testnet endpoints are `https://evm-testnet.qore.host` (with `access-control-allow-origin: *`) and `https://api-testnet.qore.host`.
+    - *Fix*: Updated `web/src/lib/chain.ts` to use `@qorechain/sdk`'s canonical endpoints and made REST status fetches fail gracefully so live EVM state (`blockNumber`, `rootEpoch`, `frozen`, `portfolioSummary`, `HolderGuard`, `keyStatus`) loads cleanly in browsers.
+
+14. **Blind Fresh-Context Audit High Findings (`H-01`, `H-02`, `H-03`) in `AttenuaVault` v1.0**
+    - *Mistake*: `AttenuaVault` v1.0 (1) allowed any depth-1 sub-agent to self-delegate a `budget=0, mask=0` child mandate (`H-01`), bypassing independent Research co-signing; (2) allowed reclaiming a parent mandate while grandchildren remained open (`H-02`); and (3) stored classical `monitorSigner` as `immutable` with no frozen-state ERC-4626 redemption path (`H-03`).
+    - *Catch*: Independent zero-context blind security audit documented in [`docs/ai/BLIND_RED_TEAM.md`](BLIND_RED_TEAM.md).
+    - *Fix*: Patched all three High findings + `M-03` (`bytes32(0)` rejection) + `L-04` (separate `monitorNonce` & constructor checks) in **`AttenuaVault` v1.1** (`0xf585fc6e1e43446f353830e0d11ff44ce747af58`), added Attack **`A10`** proving `H-01` is refused on-chain (`tx=44F6DBDE...8685`, `131,159` gas), and verified `19/19` checks via `npm run verify`.
