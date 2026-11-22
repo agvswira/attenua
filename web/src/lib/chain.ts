@@ -111,8 +111,11 @@ const publicClient = createPublicClient({
   }),
 });
 
-async function runInPairs<T>(tasks: ReadonlyArray<() => Promise<T>>, delayMs = 120): Promise<T[]> {
-  const results: T[] = [];
+async function runInPairs(
+  tasks: ReadonlyArray<() => Promise<unknown>>,
+  delayMs = 120,
+): Promise<unknown[]> {
+  const results: unknown[] = [];
   for (let i = 0; i < tasks.length; i += 2) {
     const chunk = tasks.slice(i, i + 2).map((fn) => fn());
     results.push(...(await Promise.all(chunk)));
