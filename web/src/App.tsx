@@ -11,6 +11,9 @@ import { WalletPostureDialog } from "./components/WalletPostureDialog";
 import {
   DEPLOYMENT,
   EVIDENCE,
+  EVM_RPC_URL,
+  EXPLORER_BASE,
+  QORE_CHAIN_HEX,
   explorerTxUrl,
   fetchLiveChainSnapshot,
   formatBps,
@@ -28,8 +31,20 @@ type ThemeMode = "light" | "dark" | "system";
 type SectionId = "overview" | "capability-tree" | "invariants" | "treasury";
 
 interface InjectedProvider {
+  isQoreX?: boolean;
+  isMetaMask?: boolean;
   request?: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-  enable?: () => Promise<string[]>;
+  on?: (event: string, listener: (...args: unknown[]) => void) => void;
+  removeListener?: (event: string, listener: (...args: unknown[]) => void) => void;
+}
+
+interface Eip6963AnnounceDetail {
+  info: {
+    uuid: string;
+    name: string;
+    rdns?: string;
+  };
+  provider: InjectedProvider;
 }
 
 const TIMELINE_DESCRIPTIONS: Record<string, string> = {
@@ -66,12 +81,18 @@ export function App() {
   const [loading, setLoading] = useState(true);
   const [rpcError, setRpcError] = useState<string | null>(null);
   const [connectedAddress, setConnectedAddress] = useState<Address | null>(null);
+  const [walletChainId, setWalletChainId] = useState<string | null>(null);
+  const [detectedWalletName, setDetectedWalletName] = useState<string | null>(null);
+  const [lastWalletCheckAt, setLastWalletCheckAt] = useState<string | null>(null);
   const [walletError, setWalletError] = useState<string | null>(null);
   const [connectingWallet, setConnectingWallet] = useState(false);
+  const [switchingChain, setSwitchingChain] = useState(false);
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InspectorItem | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const walletDialogRef = useRef<HTMLDialogElement | null>(null);
+  const discoveredProvidersRef = useRef<Array<{ name: string; provider: InjectedProvider }>>([]);
+  const activeProviderRef = useRef<InjectedProvider | null>(null);
 
   const effectiveTheme: "light" | "dark" =
     theme === "system" ? (systemDark ? "dark" : "light") : theme;
@@ -198,22 +219,109 @@ export function App() {
     setWalletDialogOpen(false);
   }, []);
 
-  const connectBrowserWallet = useCallback(async () => {
+  const resolveWalletProvider = useCallback((): { name: string; provider: InjectedProvider } | null => {
     const win = window as Window & { qorex?: InjectedProvider; ethereum?: InjectedProvider };
-    const provider = win.qorex ?? win.ethereum;
+    if (win.qorex?.request) {
+      return { name: "QoreX", provider: win.qorex };
+    }
+    const eip6963 = discoveredProvidersRef.current;
+    const qorexDiscovered = eip6963.find((p) => /qorex/i.test(p.name));
+    if (qorexDiscovered) return qorexDiscovered;
+    if (eip6963.length > 0) return eip6963[0];
+    if (win.ethereum?.request) {
+      const name = win.ethereum.isQoreX
+        ? "QoreX"
+        : win.ethereum.isMetaMask
+          ? "MetaMask"
+          : "EVM wallet";
+      return { name, provider: win.ethereum };
+    }
+    return null;
+  }, []);
 
-    if (!provider?.request) {
-      setWalletError("No QoreX / EVM browser extension detected — keyless inspector active.");
+  useEffect(() => {
+    const syncDetected = () => {
+      const resolved = resolveWalletProvider();
+      setDetectedWalletName(resolved ? resolved.name : null);
+    };
+
+    const onAnnounce = (event: Event) => {
+      const custom = event as CustomEvent<Eip6963AnnounceDetail>;
+      const detail = custom.detail;
+      if (!detail?.provider?.request) return;
+      const exists = discoveredProvidersRef.current.some(
+        (p) => p.provider === detail.provider || p.name === detail.info?.name,
+      );
+      if (!exists) {
+        discoveredProvidersRef.current.push({
+          name: detail.info?.name || "EVM wallet",
+          provider: detail.provider,
+        });
+      }
+      syncDetected();
+    };
+
+    window.addEventListener("eip6963:announceProvider", onAnnounce);
+    window.dispatchEvent(new Event("eip6963:requestProvider"));
+    syncDetected();
+
+    return () => {
+      window.removeEventListener("eip6963:announceProvider", onAnnounce);
+    };
+  }, [resolveWalletProvider]);
+
+  useEffect(() => {
+    const provider = activeProviderRef.current;
+    if (!provider?.on || !connectedAddress) return;
+    const handleAccountsChanged = (accs: unknown) => {
+      const list = Array.isArray(accs) ? accs : [];
+      const first = typeof list[0] === "string" ? list[0] : null;
+      if (first && isAddress(first)) {
+        setConnectedAddress(first);
+      } else {
+        setConnectedAddress(null);
+        setWalletChainId(null);
+        activeProviderRef.current = null;
+      }
+    };
+    const handleChainChanged = (cid: unknown) => {
+      if (typeof cid === "string") setWalletChainId(cid.toLowerCase());
+    };
+    provider.on("accountsChanged", handleAccountsChanged);
+    provider.on("chainChanged", handleChainChanged);
+    return () => {
+      provider.removeListener?.("accountsChanged", handleAccountsChanged);
+      provider.removeListener?.("chainChanged", handleChainChanged);
+    };
+  }, [connectedAddress]);
+
+  const connectBrowserWallet = useCallback(async () => {
+    const resolved = resolveWalletProvider();
+    setDetectedWalletName(resolved ? resolved.name : null);
+
+    if (!resolved?.provider.request) {
+      setWalletError(
+        "No QoreX or EIP-1193 browser wallet extension found. Use the keyless inspector below.",
+      );
       return;
     }
 
     setConnectingWallet(true);
     setWalletError(null);
     try {
-      const accounts = (await provider.request({ method: "eth_requestAccounts" })) as string[];
+      const accounts = (await resolved.provider.request({
+        method: "eth_requestAccounts",
+      })) as string[];
       const first = accounts?.[0];
       if (first && isAddress(first)) {
+        activeProviderRef.current = resolved.provider;
         setConnectedAddress(first);
+        try {
+          const cid = (await resolved.provider.request({ method: "eth_chainId" })) as string;
+          if (typeof cid === "string") setWalletChainId(cid.toLowerCase());
+        } catch {
+          // non-fatal if eth_chainId is unsupported
+        }
       } else {
         setWalletError("Wallet returned no EVM address.");
       }
@@ -224,20 +332,74 @@ export function App() {
     } finally {
       setConnectingWallet(false);
     }
-  }, []);
+  }, [resolveWalletProvider]);
+
+  const recheckWalletProvider = useCallback(() => {
+    window.dispatchEvent(new Event("eip6963:requestProvider"));
+    const resolved = resolveWalletProvider();
+    setDetectedWalletName(resolved ? resolved.name : null);
+    setWalletError(null);
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const ss = String(now.getSeconds()).padStart(2, "0");
+    setLastWalletCheckAt(`${hh}:${mm}:${ss}`);
+  }, [resolveWalletProvider]);
+
+  const switchToQoreChain = useCallback(async () => {
+    const provider = activeProviderRef.current ?? resolveWalletProvider()?.provider;
+    if (!provider?.request) return;
+    setSwitchingChain(true);
+    setWalletError(null);
+    try {
+      await provider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: QORE_CHAIN_HEX }],
+      });
+      setWalletChainId(QORE_CHAIN_HEX);
+    } catch (err) {
+      const code = (err as { code?: number } | null)?.code;
+      if (code === 4902) {
+        try {
+          await provider.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: QORE_CHAIN_HEX,
+                chainName: "QoreChain Diana Testnet",
+                rpcUrls: [EVM_RPC_URL],
+                nativeCurrency: { name: "QOR", symbol: "QOR", decimals: 18 },
+                blockExplorerUrls: [EXPLORER_BASE],
+              },
+            ],
+          });
+          setWalletChainId(QORE_CHAIN_HEX);
+        } catch (addErr) {
+          setWalletError(
+            addErr instanceof Error ? addErr.message : "Failed to add qorechain-diana network.",
+          );
+        }
+      } else {
+        setWalletError(err instanceof Error ? err.message : "Network switch declined.");
+      }
+    } finally {
+      setSwitchingChain(false);
+    }
+  }, [resolveWalletProvider]);
 
   const handleNavbarWalletClick = useCallback(() => {
     showWalletModal();
-    if (!connectedAddress) {
-      const win = window as Window & { qorex?: InjectedProvider; ethereum?: InjectedProvider };
-      if (win.qorex || win.ethereum) {
-        void connectBrowserWallet();
-      }
+    const resolved = resolveWalletProvider();
+    setDetectedWalletName(resolved ? resolved.name : null);
+    if (!connectedAddress && resolved) {
+      void connectBrowserWallet();
     }
-  }, [connectedAddress, connectBrowserWallet, showWalletModal]);
+  }, [connectedAddress, connectBrowserWallet, resolveWalletProvider, showWalletModal]);
 
   const handleDisconnectWallet = useCallback(() => {
+    activeProviderRef.current = null;
     setConnectedAddress(null);
+    setWalletChainId(null);
     setWalletError(null);
   }, []);
 
@@ -645,9 +807,15 @@ export function App() {
         dialogRef={walletDialogRef}
         isOpen={walletDialogOpen}
         connectedAddress={connectedAddress}
+        walletChainId={walletChainId}
+        detectedWalletName={detectedWalletName}
+        lastCheckedAt={lastWalletCheckAt}
         walletError={walletError}
         connecting={connectingWallet}
+        switchingChain={switchingChain}
         onConnect={() => void connectBrowserWallet()}
+        onRecheckWallet={recheckWalletProvider}
+        onSwitchChain={() => void switchToQoreChain()}
         onDisconnect={handleDisconnectWallet}
         onClose={handleCloseWalletDialog}
       />

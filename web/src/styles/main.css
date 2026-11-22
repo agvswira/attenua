@@ -899,8 +899,9 @@
 
   .mini-band-now {
     position: absolute;
-    inset-block: -3px;
+    inset-block: -2px;
     inline-size: 2px;
+    border-radius: 1px;
     background: var(--inverse-bg);
     transform: translateX(-50%);
     transition: inset-inline-start 450ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -943,6 +944,7 @@
     flex-direction: column;
     align-items: center;
     position: relative;
+    z-index: 3;
     block-size: 2.5rem;
   }
 
@@ -956,11 +958,13 @@
     position: relative;
     margin-block-start: -3.5px;
     margin-block-end: -3.5px;
-    z-index: 2;
+    z-index: 4;
   }
 
   .bus-branch-wrap {
     display: none;
+    position: relative;
+    z-index: 3;
     inline-size: 100%;
     flex-direction: column;
     align-items: center;
@@ -978,23 +982,42 @@
     background: var(--border-strong);
   }
 
-  .bus-horiz {
-    inline-size: 68%;
-    block-size: 1px;
-    background: var(--border-strong);
-  }
-
   .bus-drops {
-    inline-size: 68%;
-    display: flex;
-    justify-content: space-between;
+    inline-size: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
   }
 
   .bus-drop-col {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     block-size: 1.75rem;
+  }
+
+  .bus-drop-col::before {
+    content: "";
+    position: absolute;
+    inset-block-start: 0;
+    block-size: 1px;
+    background: var(--border-strong);
+  }
+
+  .bus-drop-col:first-child::before {
+    inset-inline-start: 50%;
+    inset-inline-end: calc(-0.75rem - 0.5px);
+  }
+
+  .bus-drop-col:nth-child(2)::before {
+    inset-inline-start: calc(-0.75rem - 0.5px);
+    inset-inline-end: calc(-0.75rem - 0.5px);
+  }
+
+  .bus-drop-col:last-child::before {
+    inset-inline-start: calc(-0.75rem - 0.5px);
+    inset-inline-end: 50%;
   }
 
   .subagents-grid {
@@ -1084,6 +1107,11 @@
       position: relative;
       margin-inline-end: -3.5px;
       z-index: 2;
+    }
+
+    .freeze-line {
+      inline-size: 2rem;
+      block-size: 1px;
     }
   }
 
@@ -1376,25 +1404,36 @@
   }
 
   .timeline-item {
+    position: relative;
     display: flex;
     gap: 0.75rem;
     align-items: stretch;
   }
 
   .timeline-rail {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     inline-size: 0.75rem;
     flex-shrink: 0;
-    padding-block-start: 0.35rem;
+    padding-block-start: 0.4375rem;
+  }
+
+  .timeline-rail img {
+    position: relative;
+    z-index: 2;
   }
 
   .timeline-stem {
-    flex: 1;
-    min-block-size: 0.75rem;
+    position: absolute;
+    inset-block-start: 0.75rem;
+    inset-block-end: -0.75rem;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
     inline-size: 1.5px;
     background: var(--border-strong);
+    z-index: 1;
   }
 
   .timeline-content {

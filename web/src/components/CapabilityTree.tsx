@@ -168,7 +168,6 @@ export function CapabilityTree({ effectiveTheme, live, onInspect }: CapabilityTr
           {/* 3-way horizontal bus */}
           <div className="bus-branch-wrap" aria-hidden="true">
             <span className="bus-stem-top" />
-            <span className="bus-horiz" />
             <div className="bus-drops">
               <div className="bus-drop-col">
                 <span className="stem-line" />
@@ -331,7 +330,7 @@ export function CapabilityTree({ effectiveTheme, live, onInspect }: CapabilityTr
             <div className="side-connector-freeze" aria-hidden="true">
               <span className="freeze-label">freeze()</span>
               <img src={freezeTargetSrc} alt="" width={7} height={7} className="freeze-target-dot" />
-              <img src={monitorFreezeSrc} alt="" width={72} height={1} />
+              <img src={monitorFreezeSrc} alt="" width={32} height={1} className="freeze-line" />
             </div>
 
             <div className="node-head">

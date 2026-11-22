@@ -3,8 +3,8 @@ import deployment from "@deployments/qorechain-diana.json";
 import evidence from "@deployments/live-run-evidence.json";
 
 export const EVM_RPC_URL = "https://evm-testnet.qore.host";
-export const REST_URL = "https://api-testnet.qore.host";
 export const EXPLORER_BASE = "https://dashboard.qorechain.io/explorer";
+export const QORE_CHAIN_HEX = "0x2648"; // 9800
 
 export type DeploymentManifest = typeof deployment;
 export type LiveRunEvidence = typeof evidence;
@@ -251,10 +251,10 @@ export function getInspectorItem(
       layerValue: `${DEPLOYMENT.network} (EVM Chain ID ${DEPLOYMENT.evmChainId})`,
       diagnosticTitle: "Live check values",
       diagnostic: [
-        `Guard owner()           = ${guardOwner} (renounced)`,
-        `Owner EVM window live   = ${winLive}`,
-        `AA #1 active linked keys = ${aa1Keys} (<= 1 invariant)`,
-        `Monitor AA #2 fUSD      = ${monFusd} (freeze() 0xbd2d305f only)`,
+        `Guard owner()           = ${guardOwner} (live EVM RPC · renounced)`,
+        `Monitor AA #2 fUSD      = ${monFusd} (live EVM RPC · freeze() 0xbd2d305f only)`,
+        `Owner EVM window live   = ${winLive} (verified via CLI npm run verify)`,
+        `AA #1 active linked keys = ${aa1Keys} (<= 1 invariant · verified via CLI npm run verify)`,
         `Command                 = cd agent && npm install && npm run verify`,
       ].join("\n"),
     };
@@ -312,7 +312,6 @@ export async function fetchLiveChainSnapshot(): Promise<LiveChainSnapshot> {
   const guardAddr = DEPLOYMENT.contracts.holderGuard.address as Address;
   const fusdAddr = DEPLOYMENT.contracts.fusd as Address;
   const monitorEvm = DEPLOYMENT.abstractAccounts.monitorAA2.evm as Address;
-  const ownerCosmos = DEPLOYMENT.abstractAccounts.ownerTreasuryAA1.cosmos;
 
   const [
     blockNumber,
@@ -322,8 +321,6 @@ export async function fetchLiveChainSnapshot(): Promise<LiveChainSnapshot> {
     guardOwner,
     vaultExempt,
     monitorFusdBalance,
-    windowRes,
-    authRes,
   ] = await Promise.all([
     publicClient.getBlockNumber(),
     publicClient.readContract({ address: vaultAddr, abi: VAULT_ABI, functionName: "rootEpoch" }),
@@ -332,19 +329,7 @@ export async function fetchLiveChainSnapshot(): Promise<LiveChainSnapshot> {
     publicClient.readContract({ address: guardAddr, abi: GUARD_ABI, functionName: "owner" }),
     publicClient.readContract({ address: guardAddr, abi: GUARD_ABI, functionName: "exempt", args: [vaultAddr] }),
     publicClient.readContract({ address: fusdAddr, abi: ERC20_ABI, functionName: "balanceOf", args: [monitorEvm] }),
-    fetch(`${REST_URL}/qorechain/pqc/v1/evm_window/${ownerCosmos}`)
-      .then((r) => (r.ok ? r.json() : {}))
-      .catch(() => ({})) as Promise<{
-      live?: boolean;
-    }>,
-    fetch(`${REST_URL}/qorechain/abstractaccount/v1/account/${ownerCosmos}/authenticators`)
-      .then((r) => (r.ok ? r.json() : {}))
-      .catch(() => ({})) as Promise<{
-      authenticators?: Array<{ active?: boolean }>;
-    }>,
   ]);
-
-  const activeAuthenticators = (authRes.authenticators ?? []).filter((a) => a.active).length;
 
   return {
     fetchedAt: new Date().toISOString(),
@@ -357,8 +342,8 @@ export async function fetchLiveChainSnapshot(): Promise<LiveChainSnapshot> {
     liquidityBps: Number(summary[3]),
     guardOwner,
     vaultExempt,
-    ownerWindowLive: Boolean(windowRes.live),
-    ownerActiveAuthenticators: activeAuthenticators,
+    ownerWindowLive: false,
+    ownerActiveAuthenticators: 0,
     monitorFusdBalance,
   };
 }

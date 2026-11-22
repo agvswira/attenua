@@ -3,6 +3,7 @@ import { isAddress, type Address } from "viem";
 import {
   ADDRESS_PRESETS,
   DEPLOYMENT,
+  QORE_CHAIN_HEX,
   fetchAddressPosture,
   formatFusd,
   shortAddr,
@@ -13,9 +14,15 @@ interface WalletPostureDialogProps {
   dialogRef: RefObject<HTMLDialogElement | null>;
   isOpen: boolean;
   connectedAddress: Address | null;
+  walletChainId: string | null;
+  detectedWalletName: string | null;
+  lastCheckedAt: string | null;
   walletError: string | null;
   connecting: boolean;
+  switchingChain: boolean;
   onConnect: () => void;
+  onRecheckWallet: () => void;
+  onSwitchChain: () => void;
   onDisconnect: () => void;
   onClose: () => void;
 }
@@ -24,9 +31,15 @@ export function WalletPostureDialog({
   dialogRef,
   isOpen,
   connectedAddress,
+  walletChainId,
+  detectedWalletName,
+  lastCheckedAt,
   walletError,
   connecting,
+  switchingChain,
   onConnect,
+  onRecheckWallet,
+  onSwitchChain,
   onDisconnect,
   onClose,
 }: WalletPostureDialogProps) {
@@ -117,6 +130,21 @@ export function WalletPostureDialog({
               <span className="pill pill-ok">
                 Connected · {shortAddr(connectedAddress, 6, 4)}
               </span>
+              {walletChainId === QORE_CHAIN_HEX ? (
+                <span className="pill pill-neutral">qorechain-diana · 9800</span>
+              ) : (
+                <>
+                  <span className="pill pill-warn">Wrong network</span>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={switchingChain}
+                    onClick={onSwitchChain}
+                  >
+                    {switchingChain ? "Switching…" : "Switch to Diana (9800)"}
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 className="btn btn-secondary"
@@ -127,8 +155,9 @@ export function WalletPostureDialog({
               <button type="button" className="btn btn-secondary" onClick={onDisconnect}>
                 Disconnect
               </button>
+              {walletError && <span className="dialog-status-sub">{walletError}</span>}
             </>
-          ) : (
+          ) : detectedWalletName ? (
             <>
               <button
                 type="button"
@@ -136,11 +165,23 @@ export function WalletPostureDialog({
                 disabled={connecting}
                 onClick={onConnect}
               >
-                {connecting ? "Connecting…" : "Connect QoreX wallet"}
+                {connecting ? `Connecting ${detectedWalletName}…` : `Connect ${detectedWalletName}`}
               </button>
               <span className="dialog-status-sub">
                 {walletError ??
-                  "Optional — connect a browser wallet or inspect any address keyless below."}
+                  "Read-only account & chain check (no signing required), or inspect any address keyless below."}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="pill pill-warn">No wallet extension detected</span>
+              <button type="button" className="btn btn-secondary" onClick={onRecheckWallet}>
+                Re-check wallet
+              </button>
+              <span className="dialog-status-sub">
+                {lastCheckedAt
+                  ? `Checked at ${lastCheckedAt} — no QoreX / EIP-1193 extension in this browser. Install a browser wallet or inspect any live QoreChain address keyless below.`
+                  : "Install QoreX or an EVM wallet extension to auto-connect your address, or inspect any live QoreChain address keyless below (no wallet required)."}
               </span>
             </>
           )}
