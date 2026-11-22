@@ -54,6 +54,18 @@ qor19nukelxkewjx66v08lx3kunqylsyczqgflfzhq
 
 ---
 
+## 3a. Hallmark Verified Source Records (`qorechain-diana`)
+
+All 4 deployed Solidity contracts are source-verified (`full match`, `solc 0.8.28+commit.7893614a`) and ML-DSA-87 claimed to `https://github.com/agvswira/attenua`:
+
+- `AttenuaVault` (PQ-guarded: `pqcVerify` + `pqcKeyStatus`): `https://hallmark-jade.vercel.app/c/0xf585fc6e1e43446f353830e0d11ff44ce747af58`
+- `QoreChainHybridHolderGuard` (PQ-guarded: `pqcKeyStatus`): `https://hallmark-jade.vercel.app/c/0xf70c001e482a1112ec76684ddec4ffe3bff4c652`
+- `LiquidityVault` (`QoreChainRwaVault`): `https://hallmark-jade.vercel.app/c/0xb5cf1d53872255bed60ebb731e9043b7c9ff2c8b`
+- `ReserveVault` (`QoreChainRwaVault`): `https://hallmark-jade.vercel.app/c/0x5b914270db69cee65762c75edf1e1ce2856cc72b`
+- Trustless CLI verification: `npx @agvswira/hallmark check 0xf585fc6e1e43446f353830e0d11ff44ce747af58`
+
+---
+
 ## 4. Timed Demo Video Script (Target: 2m 45s — Strict ≤ 3m Limit)
 
 | Time | Scene / Visual | Voiceover / Talking Points |

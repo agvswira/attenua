@@ -1,4 +1,11 @@
-import { DEPLOYMENT, EVIDENCE, formatBps, shortAddr, type LiveChainSnapshot } from "../lib/chain";
+import {
+  DEPLOYMENT,
+  EVIDENCE,
+  formatBps,
+  hallmarkContractUrl,
+  shortAddr,
+  type LiveChainSnapshot,
+} from "../lib/chain";
 import { EvidenceChip } from "./EvidenceChip";
 import junctionLight from "../assets/junction-light.svg";
 import junctionDark from "../assets/junction-dark.svg";
@@ -65,8 +72,15 @@ export function CapabilityTree({ effectiveTheme, live, onInspect }: CapabilityTr
           <div className="boundary-label">
             <span className="boundary-name">AttenuaVault · mandate lattice</span>
             <span className="boundary-note">
-              {shortAddr(DEPLOYMENT.contracts.attenuaVault.address, 6, 4)} · every change verifies an
-              ML-DSA-87 signature, no msg.sender trust
+              <a
+                href={hallmarkContractUrl(DEPLOYMENT.contracts.attenuaVault.address)}
+                target="_blank"
+                rel="noreferrer"
+                title="Hallmark verified source & Post-Quantum report"
+              >
+                {shortAddr(DEPLOYMENT.contracts.attenuaVault.address, 6, 4)}
+              </a>{" "}
+              · every change verifies an ML-DSA-87 signature, no msg.sender trust
             </span>
             <EvidenceChip id="H1 to H7" kind="run" label="H1 to H7" onInspect={onInspect} />
           </div>

@@ -14,12 +14,12 @@ import {
   EVM_RPC_URL,
   EXPLORER_BASE,
   QORE_CHAIN_HEX,
-  explorerTxUrl,
   fetchLiveChainSnapshot,
   formatBps,
   formatFusd,
   formatRecordedRunUtc,
   getInspectorItem,
+  hallmarkContractUrl,
   shortAddr,
   type EvidenceEntry,
   type InspectorItem,
@@ -705,10 +705,10 @@ export function App() {
                   <span className="holding-amount">{formatFusd(liquidityAssets)}</span>
                   <a
                     className="holding-addr"
-                    href={explorerTxUrl(DEPLOYMENT.contracts.liquidityVault.deployTx)}
+                    href={hallmarkContractUrl(DEPLOYMENT.contracts.liquidityVault.address)}
                     target="_blank"
                     rel="noreferrer"
-                    title={DEPLOYMENT.contracts.liquidityVault.address}
+                    title={`Hallmark verified source · ${DEPLOYMENT.contracts.liquidityVault.address}`}
                   >
                     {shortAddr(DEPLOYMENT.contracts.liquidityVault.address)}
                   </a>
@@ -718,10 +718,10 @@ export function App() {
                   <span className="holding-amount">{formatFusd(reserveAssets)}</span>
                   <a
                     className="holding-addr"
-                    href={explorerTxUrl(DEPLOYMENT.contracts.reserveVault.deployTx)}
+                    href={hallmarkContractUrl(DEPLOYMENT.contracts.reserveVault.address)}
                     target="_blank"
                     rel="noreferrer"
-                    title={DEPLOYMENT.contracts.reserveVault.address}
+                    title={`Hallmark verified source · ${DEPLOYMENT.contracts.reserveVault.address}`}
                   >
                     {shortAddr(DEPLOYMENT.contracts.reserveVault.address)}
                   </a>
@@ -731,10 +731,10 @@ export function App() {
                   <span className="holding-amount">{formatFusd(idleAssets)}</span>
                   <a
                     className="holding-addr"
-                    href={explorerTxUrl(DEPLOYMENT.contracts.attenuaVault.deployTx)}
+                    href={hallmarkContractUrl(DEPLOYMENT.contracts.attenuaVault.address)}
                     target="_blank"
                     rel="noreferrer"
-                    title={DEPLOYMENT.contracts.attenuaVault.address}
+                    title={`Hallmark verified source · ${DEPLOYMENT.contracts.attenuaVault.address}`}
                   >
                     {shortAddr(DEPLOYMENT.contracts.attenuaVault.address)}
                   </a>

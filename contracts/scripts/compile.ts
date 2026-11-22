@@ -45,16 +45,22 @@ for (const [key, fullPath] of Object.entries(SOURCES)) {
   sourcesInput[key] = { content: fs.readFileSync(fullPath, "utf8") };
 }
 
+const resolvedSources: Record<string, { content: string }> = {};
+
 function findImports(importPath: string): { contents: string } | { error: string } {
   if (importPath.startsWith("@openzeppelin/")) {
     const resolved = path.join(ROOT, "node_modules", importPath);
     if (fs.existsSync(resolved)) {
-      return { contents: fs.readFileSync(resolved, "utf8") };
+      const content = fs.readFileSync(resolved, "utf8");
+      resolvedSources[importPath] = { content };
+      return { contents: content };
     }
   }
   const direct = path.join(ROOT, importPath);
   if (fs.existsSync(direct)) {
-    return { contents: fs.readFileSync(direct, "utf8") };
+    const content = fs.readFileSync(direct, "utf8");
+    resolvedSources[importPath] = { content };
+    return { contents: content };
   }
   return { error: `Import not found: ${importPath}` };
 }
@@ -74,7 +80,23 @@ const standardInput = {
   },
 };
 
-const output = JSON.parse(solc.compile(JSON.stringify(standardInput), { import: findImports }));
+const firstOutput = JSON.parse(solc.compile(JSON.stringify(standardInput), { import: findImports }));
+
+if (firstOutput.errors?.length) {
+  let hasError = false;
+  for (const err of firstOutput.errors) {
+    console.error(err.formattedMessage);
+    if (err.severity === "error") hasError = true;
+  }
+  if (hasError) process.exit(1);
+}
+
+const selfContainedInput = {
+  ...standardInput,
+  sources: { ...sourcesInput, ...resolvedSources },
+};
+
+const output = JSON.parse(solc.compile(JSON.stringify(selfContainedInput)));
 
 if (output.errors?.length) {
   let hasError = false;
@@ -85,10 +107,35 @@ if (output.errors?.length) {
   if (hasError) process.exit(1);
 }
 
+const firstVaultHash = keccak256(
+  `0x${firstOutput.contracts["src/AttenuaVault.sol"].AttenuaVault.evm.bytecode.object}` as `0x${string}`
+);
+const selfContainedVaultHash = keccak256(
+  `0x${output.contracts["src/AttenuaVault.sol"].AttenuaVault.evm.bytecode.object}` as `0x${string}`
+);
+if (firstVaultHash !== selfContainedVaultHash) {
+  throw new Error(`Self-contained hash mismatch: ${firstVaultHash} !== ${selfContainedVaultHash}`);
+}
+
+const rawVersion = solc.version();
+const solcLongVersion = rawVersion.replace(/\.Emscripten\.clang$/, "");
+const solcVersion = solcLongVersion.split("+")[0];
+
 fs.mkdirSync(OUT_DIR, { recursive: true });
 fs.writeFileSync(
   BUILD_INFO_PATH,
-  JSON.stringify({ solcVersion: solc.version(), input: standardInput, output }, null, 2)
+  JSON.stringify(
+    {
+      _format: "hh-sol-build-info-1",
+      id: "attenua-v1.1",
+      solcVersion,
+      solcLongVersion,
+      input: selfContainedInput,
+      output,
+    },
+    null,
+    2
+  )
 );
 
 const targets = [

@@ -4,6 +4,7 @@ import evidence from "@deployments/live-run-evidence.json";
 
 export const EVM_RPC_URL = "https://evm-testnet.qore.host";
 export const EXPLORER_BASE = "https://dashboard.qorechain.io/explorer";
+export const HALLMARK_BASE = "https://hallmark-jade.vercel.app/c";
 export const QORE_CHAIN_HEX = "0x2648"; // 9800
 
 export type DeploymentManifest = typeof deployment;
@@ -123,6 +124,10 @@ export function shortAddr(addr: string, head = 6, tail = 4): string {
 
 export function explorerTxUrl(hash: string): string {
   return `${EXPLORER_BASE}/tx/${hash}`;
+}
+
+export function hallmarkContractUrl(address: string): string {
+  return `${HALLMARK_BASE}/${address.toLowerCase()}`;
 }
 
 export function formatRecordedRunUtc(iso: string): string {

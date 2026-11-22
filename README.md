@@ -5,6 +5,7 @@
 > *"Quantum-safe infrastructure is a fiduciary requirement."*
 
 - **Live Demo Dashboard**: [`https://attenua.vercel.app/`](https://attenua.vercel.app/)
+- **Source Verification**: [![Hallmark: full match · PQ-guarded](https://hallmark-jade.vercel.app/api/badge?address=0xf585fc6e1e43446f353830e0d11ff44ce747af58)](https://hallmark-jade.vercel.app/c/0xf585fc6e1e43446f353830e0d11ff44ce747af58)
 - **Cover Visual**: [`docs/assets/attenua-cover-16x9.png`](docs/assets/attenua-cover-16x9.png)
 - **Network**: QoreChain `qorechain-diana` (EVM Chain ID `9800`)
 
@@ -38,10 +39,10 @@ Full manifest in [`deployments/qorechain-diana.json`](deployments/qorechain-dian
 
 | Contract / Account | Address | Hardening Status |
 |---|---|---|
-| `AttenuaVault` (v1.1) | `0xf585fc6e1e43446f353830e0d11ff44ce747af58` | Zero `msg.sender` trust; per-action `ML-DSA-87`; v1.1 blind-audit hardened (`H-01..H-03`, `L-04`) |
-| `QoreChainHybridHolderGuard` | `0xf70c001e482a1112ec76684ddec4ffe3bff4c652` | `exempt(AttenuaVault) = true`; `owner = 0x0000...0000` (renounced); Owner EVM window closed (`live = false`) |
-| `LiquidityVault` (ERC-4626 `fUSD`) | `0xb5cf1d53872255bed60ebb731e9043b7c9ff2c8b` | Apache-2.0 `@qorechain/asset-kit` `QoreChainRwaVault` |
-| `ReserveVault` (ERC-4626 `fUSD`) | `0x5b914270db69cee65762c75edf1e1ce2856cc72b` | Apache-2.0 `@qorechain/asset-kit` `QoreChainRwaVault` |
+| `AttenuaVault` (v1.1) | [`0xf585fc6e1e43446f353830e0d11ff44ce747af58`](https://hallmark-jade.vercel.app/c/0xf585fc6e1e43446f353830e0d11ff44ce747af58) | Hallmark **full match** (`PQ-guarded: pqcVerify + pqcKeyStatus`); zero `msg.sender` trust; v1.1 blind-audit hardened (`H-01..H-03`, `L-04`) |
+| `QoreChainHybridHolderGuard` | [`0xf70c001e482a1112ec76684ddec4ffe3bff4c652`](https://hallmark-jade.vercel.app/c/0xf70c001e482a1112ec76684ddec4ffe3bff4c652) | Hallmark **full match** (`PQ-guarded: pqcKeyStatus`); `exempt(AttenuaVault) = true`; `owner = 0x0000...0000` (renounced); Owner EVM window closed (`live = false`) |
+| `LiquidityVault` (ERC-4626 `fUSD`) | [`0xb5cf1d53872255bed60ebb731e9043b7c9ff2c8b`](https://hallmark-jade.vercel.app/c/0xb5cf1d53872255bed60ebb731e9043b7c9ff2c8b) | Hallmark **full match**; Apache-2.0 `@qorechain/asset-kit` `QoreChainRwaVault` |
+| `ReserveVault` (ERC-4626 `fUSD`) | [`0x5b914270db69cee65762c75edf1e1ce2856cc72b`](https://hallmark-jade.vercel.app/c/0x5b914270db69cee65762c75edf1e1ce2856cc72b) | Hallmark **full match**; Apache-2.0 `@qorechain/asset-kit` `QoreChainRwaVault` |
 | Owner Treasury (AA #1) | `qor1k4xryjqufhdh44hgsqdpj5llr7y3dwyfenxfqg` | Single-linked-key invariant (Orchestrator only); `fUSD` cap `10/tx`, `25/day` |
 | Isolated Monitor (AA #2) | `qor10vv75f5qwca5hra7ye0vxwemz2t6q6lv28m7d4` | `0 fUSD`, `1 uqor/day`, locked to `AttenuaVault.freeze()` (`0xbd2d305f`) only |
 
@@ -55,6 +56,7 @@ npm install
 npm run verify      # 19/19 read-only live checks on qorechain-diana
 npm test            # 14 ML-DSA-87 helpers, 200 property/fuzz runs, screener & live invariants
 npm run screen:demo # Run Research prompt-injection screener against live chain state
+npx @agvswira/hallmark check 0xf585fc6e1e43446f353830e0d11ff44ce747af58
 ```
 
 ### Run the Web Dashboard & Read-Only Live Attack Theatre

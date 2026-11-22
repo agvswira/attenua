@@ -772,6 +772,16 @@
     color: var(--text-muted);
   }
 
+  .boundary-note a {
+    font-family: var(--font-mono);
+    text-decoration: none;
+  }
+
+  .boundary-note a:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+  }
+
   /* Tree Card Nodes */
   .agent-node {
     position: relative;
