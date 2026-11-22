@@ -104,8 +104,24 @@ const ERC20_ABI = parseAbi([
 ]);
 
 const publicClient = createPublicClient({
-  transport: http(EVM_RPC_URL, { timeout: 12_000 }),
+  transport: http(EVM_RPC_URL, {
+    timeout: 15_000,
+    retryCount: 4,
+    retryDelay: 800,
+  }),
 });
+
+async function runInPairs<T>(tasks: ReadonlyArray<() => Promise<T>>, delayMs = 120): Promise<T[]> {
+  const results: T[] = [];
+  for (let i = 0; i < tasks.length; i += 2) {
+    const chunk = tasks.slice(i, i + 2).map((fn) => fn());
+    results.push(...(await Promise.all(chunk)));
+    if (i + 2 < tasks.length) {
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+  return results;
+}
 
 export function formatFusd(micro: bigint, withUnit = true): string {
   const whole = micro / 1_000_000n;
@@ -326,15 +342,15 @@ export async function fetchLiveChainSnapshot(): Promise<LiveChainSnapshot> {
     guardOwner,
     vaultExempt,
     monitorFusdBalance,
-  ] = await Promise.all([
-    publicClient.getBlockNumber(),
-    publicClient.readContract({ address: vaultAddr, abi: VAULT_ABI, functionName: "rootEpoch" }),
-    publicClient.readContract({ address: vaultAddr, abi: VAULT_ABI, functionName: "frozen" }),
-    publicClient.readContract({ address: vaultAddr, abi: VAULT_ABI, functionName: "portfolioSummary" }),
-    publicClient.readContract({ address: guardAddr, abi: GUARD_ABI, functionName: "owner" }),
-    publicClient.readContract({ address: guardAddr, abi: GUARD_ABI, functionName: "exempt", args: [vaultAddr] }),
-    publicClient.readContract({ address: fusdAddr, abi: ERC20_ABI, functionName: "balanceOf", args: [monitorEvm] }),
-  ]);
+  ] = (await runInPairs([
+    () => publicClient.getBlockNumber(),
+    () => publicClient.readContract({ address: vaultAddr, abi: VAULT_ABI, functionName: "rootEpoch" }),
+    () => publicClient.readContract({ address: vaultAddr, abi: VAULT_ABI, functionName: "frozen" }),
+    () => publicClient.readContract({ address: vaultAddr, abi: VAULT_ABI, functionName: "portfolioSummary" }),
+    () => publicClient.readContract({ address: guardAddr, abi: GUARD_ABI, functionName: "owner" }),
+    () => publicClient.readContract({ address: guardAddr, abi: GUARD_ABI, functionName: "exempt", args: [vaultAddr] }),
+    () => publicClient.readContract({ address: fusdAddr, abi: ERC20_ABI, functionName: "balanceOf", args: [monitorEvm] }),
+  ])) as [bigint, bigint, boolean, readonly [bigint, bigint, bigint, bigint], Address, boolean, bigint];
 
   return {
     fetchedAt: new Date().toISOString(),
@@ -391,52 +407,64 @@ export function inferAttenuaRole(addr: string, isVendor: boolean): string {
   return "External Observer (0 spend authority)";
 }
 
+const postureCache = new Map<string, AddressPosture>();
+
 export async function fetchAddressPosture(address: Address): Promise<AddressPosture> {
+  const cacheKey = address.toLowerCase();
+  const cached = postureCache.get(cacheKey);
+  if (cached) return cached;
+
   const vaultAddr = DEPLOYMENT.contracts.attenuaVault.address as Address;
   const guardAddr = DEPLOYMENT.contracts.holderGuard.address as Address;
   const fusdAddr = DEPLOYMENT.contracts.fusd as Address;
 
   const [fusdBalance, vaultNonce, isVendor, guardExempt, guardEligible, keyStatus] =
-    await Promise.all([
-      publicClient.readContract({
-        address: fusdAddr,
-        abi: ERC20_ABI,
-        functionName: "balanceOf",
-        args: [address],
-      }),
-      publicClient.readContract({
-        address: vaultAddr,
-        abi: VAULT_ABI,
-        functionName: "nonces",
-        args: [address],
-      }),
-      publicClient.readContract({
-        address: vaultAddr,
-        abi: VAULT_ABI,
-        functionName: "registeredVendors",
-        args: [address],
-      }),
-      publicClient.readContract({
-        address: guardAddr,
-        abi: GUARD_ABI,
-        functionName: "exempt",
-        args: [address],
-      }),
-      publicClient.readContract({
-        address: guardAddr,
-        abi: GUARD_ABI,
-        functionName: "isEligible",
-        args: [address],
-      }),
-      publicClient.readContract({
-        address: guardAddr,
-        abi: GUARD_ABI,
-        functionName: "keyStatus",
-        args: [address],
-      }),
-    ]);
+    (await runInPairs([
+      () =>
+        publicClient.readContract({
+          address: fusdAddr,
+          abi: ERC20_ABI,
+          functionName: "balanceOf",
+          args: [address],
+        }),
+      () =>
+        publicClient.readContract({
+          address: vaultAddr,
+          abi: VAULT_ABI,
+          functionName: "nonces",
+          args: [address],
+        }),
+      () =>
+        publicClient.readContract({
+          address: vaultAddr,
+          abi: VAULT_ABI,
+          functionName: "registeredVendors",
+          args: [address],
+        }),
+      () =>
+        publicClient.readContract({
+          address: guardAddr,
+          abi: GUARD_ABI,
+          functionName: "exempt",
+          args: [address],
+        }),
+      () =>
+        publicClient.readContract({
+          address: guardAddr,
+          abi: GUARD_ABI,
+          functionName: "isEligible",
+          args: [address],
+        }),
+      () =>
+        publicClient.readContract({
+          address: guardAddr,
+          abi: GUARD_ABI,
+          functionName: "keyStatus",
+          args: [address],
+        }),
+    ])) as [bigint, bigint, boolean, boolean, boolean, readonly [boolean, boolean, number, boolean]];
 
-  return {
+  const result: AddressPosture = {
     address,
     role: inferAttenuaRole(address, isVendor),
     fusdBalance,
@@ -449,4 +477,6 @@ export async function fetchAddressPosture(address: Address): Promise<AddressPost
     pqcAlgorithmId: Number(keyStatus[2]),
     pqcPossessionProven: keyStatus[3],
   };
+  postureCache.set(cacheKey, result);
+  return result;
 }

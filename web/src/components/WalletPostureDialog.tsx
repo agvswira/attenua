@@ -68,12 +68,9 @@ export function WalletPostureDialog({
 
   useEffect(() => {
     if (!isOpen) return;
-    if (connectedAddress) {
-      void inspectAddress(connectedAddress);
-    } else {
-      void inspectAddress(targetAddr);
-    }
-  }, [isOpen, connectedAddress, inspectAddress]);
+    void inspectAddress(connectedAddress ?? targetAddr);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, connectedAddress]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
