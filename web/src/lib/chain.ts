@@ -56,18 +56,46 @@ export interface LiveChainSnapshot {
   monitorFusdBalance: bigint;
 }
 
+export interface AddressPosture {
+  address: Address;
+  role: string;
+  fusdBalance: bigint;
+  vaultNonce: bigint;
+  isVendor: boolean;
+  guardExempt: boolean;
+  guardEligible: boolean;
+  pqcResponded: boolean;
+  pqcRegistered: boolean;
+  pqcAlgorithmId: number;
+  pqcPossessionProven: boolean;
+}
+
 export const DEPLOYMENT: DeploymentManifest = deployment;
 export const EVIDENCE: LiveRunEvidence = evidence;
+
+export const ADDRESS_PRESETS: Array<{ label: string; address: Address }> = [
+  { label: "Owner", address: DEPLOYMENT.abstractAccounts.ownerTreasuryAA1.evm as Address },
+  { label: "Allocator", address: DEPLOYMENT.actors.allocator.evm as Address },
+  { label: "Payables", address: DEPLOYMENT.actors.payables.evm as Address },
+  { label: "Research", address: DEPLOYMENT.actors.research.evm as Address },
+  { label: "Vendor", address: DEPLOYMENT.actors.vendor.evm as Address },
+  { label: "Attacker", address: DEPLOYMENT.actors.unlistedAttacker.evm as Address },
+  { label: "AttenuaVault", address: DEPLOYMENT.contracts.attenuaVault.address as Address },
+];
 
 const VAULT_ABI = parseAbi([
   "function rootEpoch() view returns (uint64)",
   "function frozen() view returns (bool)",
   "function portfolioSummary() view returns (uint256,uint256,uint256,uint256)",
+  "function registeredVendors(address) view returns (bool)",
+  "function nonces(address) view returns (uint64)",
 ]);
 
 const GUARD_ABI = parseAbi([
   "function owner() view returns (address)",
   "function exempt(address) view returns (bool)",
+  "function isEligible(address) view returns (bool)",
+  "function keyStatus(address) view returns (bool,bool,uint8,bool)",
 ]);
 
 const ERC20_ABI = parseAbi([
@@ -329,5 +357,103 @@ export async function fetchLiveChainSnapshot(): Promise<LiveChainSnapshot> {
     ownerWindowLive: Boolean(windowRes.live),
     ownerActiveAuthenticators: activeAuthenticators,
     monitorFusdBalance,
+  };
+}
+
+export function inferAttenuaRole(addr: string, isVendor: boolean): string {
+  const lower = addr.toLowerCase();
+  if (lower === DEPLOYMENT.abstractAccounts.ownerTreasuryAA1.evm.toLowerCase()) {
+    return "Root Owner (AA #1)";
+  }
+  if (lower === DEPLOYMENT.actors.orchestratorPqc.evm.toLowerCase()) {
+    return "Orchestrator (ML-DSA-87)";
+  }
+  if (lower === DEPLOYMENT.actors.allocator.evm.toLowerCase()) {
+    return "Allocator sub-agent";
+  }
+  if (lower === DEPLOYMENT.actors.payables.evm.toLowerCase()) {
+    return "Payables sub-agent";
+  }
+  if (lower === DEPLOYMENT.actors.research.evm.toLowerCase()) {
+    return "Research sub-agent (budget = 0)";
+  }
+  if (lower === DEPLOYMENT.actors.vendor.evm.toLowerCase() || isVendor) {
+    return "Allowlisted Vendor";
+  }
+  if (lower === DEPLOYMENT.actors.unlistedAttacker.evm.toLowerCase()) {
+    return "Unlisted Attacker (0 authority)";
+  }
+  if (lower === DEPLOYMENT.abstractAccounts.monitorAA2.evm.toLowerCase()) {
+    return "Monitor (AA #2 · freeze only)";
+  }
+  if (lower === DEPLOYMENT.contracts.attenuaVault.address.toLowerCase()) {
+    return "AttenuaVault contract";
+  }
+  if (lower === DEPLOYMENT.contracts.liquidityVault.address.toLowerCase()) {
+    return "LiquidityVault (ERC-4626)";
+  }
+  if (lower === DEPLOYMENT.contracts.reserveVault.address.toLowerCase()) {
+    return "ReserveVault (ERC-4626)";
+  }
+  return "External Observer (0 spend authority)";
+}
+
+export async function fetchAddressPosture(address: Address): Promise<AddressPosture> {
+  const vaultAddr = DEPLOYMENT.contracts.attenuaVault.address as Address;
+  const guardAddr = DEPLOYMENT.contracts.holderGuard.address as Address;
+  const fusdAddr = DEPLOYMENT.contracts.fusd as Address;
+
+  const [fusdBalance, vaultNonce, isVendor, guardExempt, guardEligible, keyStatus] =
+    await Promise.all([
+      publicClient.readContract({
+        address: fusdAddr,
+        abi: ERC20_ABI,
+        functionName: "balanceOf",
+        args: [address],
+      }),
+      publicClient.readContract({
+        address: vaultAddr,
+        abi: VAULT_ABI,
+        functionName: "nonces",
+        args: [address],
+      }),
+      publicClient.readContract({
+        address: vaultAddr,
+        abi: VAULT_ABI,
+        functionName: "registeredVendors",
+        args: [address],
+      }),
+      publicClient.readContract({
+        address: guardAddr,
+        abi: GUARD_ABI,
+        functionName: "exempt",
+        args: [address],
+      }),
+      publicClient.readContract({
+        address: guardAddr,
+        abi: GUARD_ABI,
+        functionName: "isEligible",
+        args: [address],
+      }),
+      publicClient.readContract({
+        address: guardAddr,
+        abi: GUARD_ABI,
+        functionName: "keyStatus",
+        args: [address],
+      }),
+    ]);
+
+  return {
+    address,
+    role: inferAttenuaRole(address, isVendor),
+    fusdBalance,
+    vaultNonce,
+    isVendor,
+    guardExempt,
+    guardEligible,
+    pqcResponded: keyStatus[0],
+    pqcRegistered: keyStatus[1],
+    pqcAlgorithmId: Number(keyStatus[2]),
+    pqcPossessionProven: keyStatus[3],
   };
 }

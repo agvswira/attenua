@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { isAddress, type Address } from "viem";
 import logoMarkLight from "./assets/logo-mark-light.svg";
 import logoMarkDark from "./assets/logo-mark-dark.svg";
 import timelineDotLight from "./assets/timeline-dot-light.svg";
@@ -6,6 +7,7 @@ import timelineDotDark from "./assets/timeline-dot-dark.svg";
 import { CapabilityTree } from "./components/CapabilityTree";
 import { EvidenceChip } from "./components/EvidenceChip";
 import { InspectorDialog } from "./components/InspectorDialog";
+import { WalletPostureDialog } from "./components/WalletPostureDialog";
 import {
   DEPLOYMENT,
   EVIDENCE,
@@ -63,10 +65,13 @@ export function App() {
   const [live, setLive] = useState<LiveChainSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [rpcError, setRpcError] = useState<string | null>(null);
-  const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
+  const [connectedAddress, setConnectedAddress] = useState<Address | null>(null);
+  const [walletError, setWalletError] = useState<string | null>(null);
+  const [connectingWallet, setConnectingWallet] = useState(false);
+  const [walletDialogOpen, setWalletDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InspectorItem | null>(null);
-  const [walletNotice, setWalletNotice] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const walletDialogRef = useRef<HTMLDialogElement | null>(null);
 
   const effectiveTheme: "light" | "dark" =
     theme === "system" ? (systemDark ? "dark" : "light") : theme;
@@ -164,7 +169,6 @@ export function App() {
     (chipId: string) => {
       const item = getInspectorItem(chipId, live);
       if (!item) return;
-      setWalletNotice(null);
       setSelectedItem(item);
       showModal();
     },
@@ -172,39 +176,70 @@ export function App() {
   );
 
   const handleCloseDialog = useCallback(() => {
-    dialogRef.current?.close();
-    setWalletNotice(null);
+    if (dialogRef.current?.open) {
+      dialogRef.current.close();
+    }
   }, []);
 
-  const handleConnectWallet = useCallback(async () => {
+  const showWalletModal = useCallback(() => {
+    setWalletDialogOpen(true);
+    queueMicrotask(() => {
+      const dlg = walletDialogRef.current;
+      if (dlg && !dlg.open) {
+        dlg.showModal();
+      }
+    });
+  }, []);
+
+  const handleCloseWalletDialog = useCallback(() => {
+    if (walletDialogRef.current?.open) {
+      walletDialogRef.current.close();
+    }
+    setWalletDialogOpen(false);
+  }, []);
+
+  const connectBrowserWallet = useCallback(async () => {
     const win = window as Window & { qorex?: InjectedProvider; ethereum?: InjectedProvider };
     const provider = win.qorex ?? win.ethereum;
 
-    if (provider?.request) {
-      try {
-        const accounts = (await provider.request({ method: "eth_requestAccounts" })) as string[];
-        if (accounts?.[0]) {
-          setConnectedWallet(shortAddr(accounts[0], 6, 4));
-          return;
-        }
-      } catch (err) {
-        setSelectedItem(null);
-        setWalletNotice(
-          err instanceof Error
-            ? `Wallet request declined: ${err.message}`
-            : "Wallet connection was cancelled.",
-        );
-        showModal();
-        return;
-      }
+    if (!provider?.request) {
+      setWalletError("No QoreX / EVM browser extension detected — keyless inspector active.");
+      return;
     }
 
-    setSelectedItem(null);
-    setWalletNotice(
-      "QoreX / EVM browser extension was not detected in this tab. All Attenua verification, RPC inspection, and Explorer proofs work keyless without connecting a wallet.",
-    );
-    showModal();
-  }, [showModal]);
+    setConnectingWallet(true);
+    setWalletError(null);
+    try {
+      const accounts = (await provider.request({ method: "eth_requestAccounts" })) as string[];
+      const first = accounts?.[0];
+      if (first && isAddress(first)) {
+        setConnectedAddress(first);
+      } else {
+        setWalletError("Wallet returned no EVM address.");
+      }
+    } catch (err) {
+      setWalletError(
+        err instanceof Error ? `Wallet declined: ${err.message}` : "Wallet connection cancelled.",
+      );
+    } finally {
+      setConnectingWallet(false);
+    }
+  }, []);
+
+  const handleNavbarWalletClick = useCallback(() => {
+    showWalletModal();
+    if (!connectedAddress) {
+      const win = window as Window & { qorex?: InjectedProvider; ethereum?: InjectedProvider };
+      if (win.qorex || win.ethereum) {
+        void connectBrowserWallet();
+      }
+    }
+  }, [connectedAddress, connectBrowserWallet, showWalletModal]);
+
+  const handleDisconnectWallet = useCallback(() => {
+    setConnectedAddress(null);
+    setWalletError(null);
+  }, []);
 
   const logoSrc = effectiveTheme === "dark" ? logoMarkDark : logoMarkLight;
   const dotSrc = effectiveTheme === "dark" ? timelineDotDark : timelineDotLight;
@@ -301,9 +336,11 @@ export function App() {
             <button
               type="button"
               className="btn btn-primary"
-              onClick={() => void handleConnectWallet()}
+              onClick={handleNavbarWalletClick}
             >
-              {connectedWallet ? `QoreX · ${connectedWallet}` : "Connect QoreX wallet"}
+              {connectedAddress
+                ? `QoreX · ${shortAddr(connectedAddress, 6, 4)}`
+                : "Connect QoreX wallet"}
             </button>
           </div>
         </div>
@@ -601,8 +638,18 @@ export function App() {
       <InspectorDialog
         dialogRef={dialogRef}
         item={selectedItem}
-        walletNotice={walletNotice}
         onClose={handleCloseDialog}
+      />
+
+      <WalletPostureDialog
+        dialogRef={walletDialogRef}
+        isOpen={walletDialogOpen}
+        connectedAddress={connectedAddress}
+        walletError={walletError}
+        connecting={connectingWallet}
+        onConnect={() => void connectBrowserWallet()}
+        onDisconnect={handleDisconnectWallet}
+        onClose={handleCloseWalletDialog}
       />
     </>
   );
