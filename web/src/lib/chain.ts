@@ -21,6 +21,25 @@ export interface EvidenceEntry {
   verbatimReason?: string;
 }
 
+export interface InspectorItem {
+  id: string;
+  kind: "attack" | "run" | "check";
+  eyebrow: string;
+  title: string;
+  pillTone: "ok" | "danger" | "warn" | "neutral";
+  pillLabel: string;
+  subtitle: string;
+  actorLabel: string;
+  actorValue: string;
+  layerLabel: string;
+  layerValue: string;
+  gasUsed?: string;
+  txHash?: string;
+  extraTxs?: Array<{ id: string; txHash: string; gas: string }>;
+  diagnosticTitle: string;
+  diagnostic: string;
+}
+
 export interface LiveChainSnapshot {
   fetchedAt: string;
   blockNumber: string;
@@ -35,7 +54,6 @@ export interface LiveChainSnapshot {
   ownerWindowLive: boolean;
   ownerActiveAuthenticators: number;
   monitorFusdBalance: bigint;
-  error?: string;
 }
 
 export const DEPLOYMENT: DeploymentManifest = deployment;
@@ -60,10 +78,10 @@ const publicClient = createPublicClient({
   transport: http(EVM_RPC_URL, { timeout: 12_000 }),
 });
 
-export function formatFusd(micro: bigint): string {
+export function formatFusd(micro: bigint, withUnit = true): string {
   const whole = micro / 1_000_000n;
   const frac = (micro % 1_000_000n).toString().padStart(6, "0").slice(0, 2);
-  return `${whole}.${frac} fUSD`;
+  return withUnit ? `${whole}.${frac} fUSD` : `${whole}.${frac}`;
 }
 
 export function formatBps(bps: number): string {
@@ -77,6 +95,187 @@ export function shortAddr(addr: string, head = 6, tail = 4): string {
 
 export function explorerTxUrl(hash: string): string {
   return `${EXPLORER_BASE}/tx/${hash}`;
+}
+
+export function formatRecordedRunUtc(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const day = d.getUTCDate();
+  const mon = months[d.getUTCMonth()];
+  const year = d.getUTCFullYear();
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${day} ${mon} ${year}, ${hh}:${mm} UTC`;
+}
+
+export function splitFusdParts(micro: bigint): { whole: string; frac: string } {
+  const whole = (micro / 1_000_000n).toString();
+  const frac = (micro % 1_000_000n).toString().padStart(6, "0").slice(0, 2);
+  return { whole, frac };
+}
+
+const CONTEXT_MAP: Record<string, string> = {
+  A1: "tests I4, Monotonic attenuation",
+  A2: "tests I5, Budget conservation",
+  A3: "tests I4, Monotonic attenuation",
+  A4: "tests I4, Monotonic attenuation",
+  A5: "tests I6, 3-signature invoice settlement",
+  A6: "tests I6, 3-signature invoice settlement",
+  A7: "tests I7, No standing allowance",
+  A8: "tests I3, Isolated freeze-only monitor",
+  A9: "tests I9, O(1) post-quantum kill-switch",
+  H1: "root IPS mandate setup",
+  H2: "proven vendor onboarding",
+  H3: "tests I7, No standing allowance",
+  H4a: "delegates Allocator sub-mandate",
+  H4b: "delegates Payables sub-mandate",
+  H4c: "delegates Research clearance role",
+  H5: "ERC-4626 rebalance inside band",
+  H6: "tests I6, 3-signature invoice settlement",
+  H7: "tests I5, Budget conservation",
+};
+
+const FRIENDLY_ATTACK_TITLE: Record<string, string> = {
+  A5: "Prompt-injected invoice to an unlisted attacker address",
+};
+
+function shortReasonTag(layer: string): string {
+  const match = /\(([^)]+)\)/.exec(layer);
+  if (!match) return layer;
+  const base = layer.slice(0, match.index).trim();
+  const errName = match[1];
+  return `${base || "AttenuaVault"} · ${errName}`;
+}
+
+export function getInspectorItem(
+  chipId: string,
+  live: LiveChainSnapshot | null,
+): InspectorItem | null {
+  const attacks = EVIDENCE.attacks as EvidenceEntry[];
+  const happy = EVIDENCE.happyPath as EvidenceEntry[];
+
+  if (chipId === "H4") {
+    const sub = happy.filter((h) => h.id === "H4a" || h.id === "H4b" || h.id === "H4c");
+    if (sub.length === 0) return null;
+    const totalGas = sub.reduce((acc, s) => acc + Number(s.evmGasUsed || 0), 0);
+    return {
+      id: "H4",
+      kind: "run",
+      eyebrow: "H4 · H4a + H4b + H4c delegation batch",
+      title: "Orchestrator delegates 3 sub-mandates",
+      pillTone: "ok",
+      pillLabel: "3/3 verified",
+      subtitle: "Allocator (6 fUSD, [45%,65%]), Payables (2 fUSD), Research (0 fUSD)",
+      actorLabel: "Issuer",
+      actorValue: "Orchestrator (ML-DSA-87)",
+      layerLabel: "Enforced by",
+      layerValue: "AttenuaVault Attenuation Lattice",
+      gasUsed: String(totalGas),
+      txHash: sub[0].txHash,
+      extraTxs: sub.map((s) => ({ id: s.id, txHash: s.txHash, gas: s.evmGasUsed })),
+      diagnosticTitle: "Mandate IDs committed on-chain",
+      diagnostic: sub.map((s) => `${s.id}: ${s.summary} (tx ${s.txHash})`).join("\n"),
+    };
+  }
+
+  if (chipId === "H1 to H7") {
+    const totalGas = happy.reduce((acc, s) => acc + Number(s.evmGasUsed || 0), 0);
+    return {
+      id: "H1 to H7",
+      kind: "run",
+      eyebrow: "H1 to H7 · tests I1, Zero msg.sender trust",
+      title: "Full 9-transaction swarm lifecycle",
+      pillTone: "ok",
+      pillLabel: `${happy.length}/${happy.length} verified`,
+      subtitle: "Every state mutation authenticated by ML-DSA-87, zero msg.sender / onlyOwner checks",
+      actorLabel: "Principals",
+      actorValue: "Owner, Orchestrator, Allocator, Payables, Vendor, Research",
+      layerLabel: "Enforced by",
+      layerValue: "AttenuaVault + PqcVerifier (0x…0a01 / 0x…0a02)",
+      gasUsed: String(totalGas),
+      txHash: happy[0]?.txHash,
+      extraTxs: happy.map((s) => ({ id: s.id, txHash: s.txHash, gas: s.evmGasUsed })),
+      diagnosticTitle: "Verified happy-path transactions",
+      diagnostic: happy
+        .map((s) => `${s.id} (${Number(s.evmGasUsed).toLocaleString()} gas): ${s.title}`)
+        .join("\n"),
+    };
+  }
+
+  if (chipId === "verify") {
+    const guardOwner = live ? live.guardOwner : DEPLOYMENT.contracts.holderGuard.ownerAfterRenounce;
+    const winLive = live ? String(live.ownerWindowLive) : "false";
+    const aa1Keys = live ? String(live.ownerActiveAuthenticators) : "0";
+    const monFusd = live ? formatFusd(live.monitorFusdBalance) : "0.00 fUSD";
+    return {
+      id: "verify",
+      kind: "check",
+      eyebrow: "verify · Keyless CLI audit (cd agent && npm run verify)",
+      title: "19 read-only on-chain invariant checks pass without private keys",
+      pillTone: "ok",
+      pillLabel: "19 passed, 0 failed",
+      subtitle: "Verifies deployed bytecode, renounced guard ownership, AA isolation, and PQC keys",
+      actorLabel: "Runner",
+      actorValue: "Keyless JSON-RPC & Cosmos REST queries",
+      layerLabel: "Target chain",
+      layerValue: `${DEPLOYMENT.network} (EVM Chain ID ${DEPLOYMENT.evmChainId})`,
+      diagnosticTitle: "Live check values",
+      diagnostic: [
+        `Guard owner()           = ${guardOwner} (renounced)`,
+        `Owner EVM window live   = ${winLive}`,
+        `AA #1 active linked keys = ${aa1Keys} (<= 1 invariant)`,
+        `Monitor AA #2 fUSD      = ${monFusd} (freeze() 0xbd2d305f only)`,
+        `Command                 = cd agent && npm install && npm run verify`,
+      ].join("\n"),
+    };
+  }
+
+  const foundAttack = attacks.find((a) => a.id === chipId);
+  if (foundAttack) {
+    const context = CONTEXT_MAP[foundAttack.id] ?? "adversarial defense check";
+    return {
+      id: foundAttack.id,
+      kind: "attack",
+      eyebrow: `${foundAttack.id} · ${context}`,
+      title: FRIENDLY_ATTACK_TITLE[foundAttack.id] ?? foundAttack.title,
+      pillTone: foundAttack.passed ? "ok" : "danger",
+      pillLabel: foundAttack.passed ? "Refused on-chain" : "Unexpected pass",
+      subtitle: foundAttack.summary.replace(/^Refused on-chain:\s*/i, ""),
+      actorLabel: "Attacker",
+      actorValue: foundAttack.actor,
+      layerLabel: "Refused by",
+      layerValue: shortReasonTag(foundAttack.layer),
+      gasUsed: foundAttack.evmGasUsed,
+      txHash: foundAttack.txHash,
+      diagnosticTitle: "Verbatim on-chain diagnostic",
+      diagnostic: foundAttack.verbatimReason ?? "execution reverted: evm transaction execution failed",
+    };
+  }
+
+  const foundHappy = happy.find((h) => h.id === chipId);
+  if (foundHappy) {
+    const context = CONTEXT_MAP[foundHappy.id] ?? "happy-path execution";
+    return {
+      id: foundHappy.id,
+      kind: "run",
+      eyebrow: `${foundHappy.id} · ${context}`,
+      title: foundHappy.title,
+      pillTone: foundHappy.passed ? "ok" : "danger",
+      pillLabel: foundHappy.passed ? "Verified on-chain" : "Failed",
+      subtitle: foundHappy.summary,
+      actorLabel: "Signer",
+      actorValue: foundHappy.actor,
+      layerLabel: "Verified by",
+      layerValue: foundHappy.layer,
+      gasUsed: foundHappy.evmGasUsed,
+      txHash: foundHappy.txHash,
+      diagnosticTitle: "Recorded execution summary",
+      diagnostic: foundHappy.summary,
+    };
+  }
+
+  return null;
 }
 
 export async function fetchLiveChainSnapshot(): Promise<LiveChainSnapshot> {

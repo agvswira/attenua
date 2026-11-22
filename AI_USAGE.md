@@ -9,8 +9,8 @@ Rather than relying on a single AI model checking its own work, **Attenua** is b
 ```mermaid
 flowchart LR
   H[Human Engineer<br/>Direction, Product Coherence, Keys, Final Veto]
-  M1[Model A — Builder & Researcher<br/>Live Chain Probing, Design, Code, Tests]
-  M2[Model B — Independent Red-Team Reviewer<br/>Fresh Context, Source/Docs Cross-Check, Attack Hunting]
+  M1["Model A (Gemini 4 Neon) — Builder & Researcher<br/>Live Chain Probing, Design, Code, Tests"]
+  M2["Model B (Claude Opus 5.5) — Independent Red-Team Reviewer<br/>Fresh Context, Source/Docs Cross-Check, Attack Hunting"]
   C[Live qorechain-diana Testnet & Source Code<br/>Ground Truth Arbiter]
 
   H --> M1
@@ -22,8 +22,8 @@ flowchart LR
   C -->|Empirical Spike / Gas / Event Proof| M1
 ```
 
-- **Model A** reads QoreChain documentation and kit sources, queries live `qorechain-diana` REST/RPC endpoints, proposes architecture, drafts Solidity/TypeScript code, and runs verification scripts.
-- **Model B** (an independent model family with no shared chat history) audits every architectural claim against QoreChain's live documentation, SDK `.d.ts` definitions, and `qorechain-asset-kit` Solidity source code to hunt for trust-model flaws, misquoted specs, and hidden classical-key gaps.
+- **Model A (Gemini 4 Neon)** reads QoreChain documentation and kit sources, queries live `qorechain-diana` REST/RPC endpoints, proposes architecture, drafts Solidity/TypeScript code, and runs verification scripts.
+- **Model B (Claude Opus 5.5)** (an independent model family with no shared chat history) audits every architectural claim against QoreChain's live documentation, SDK `.d.ts` definitions, and `qorechain-asset-kit` Solidity source code to hunt for trust-model flaws, misquoted specs, and hidden classical-key gaps.
 - **Ground Truth Arbiter**: Disagreements between models are never settled by prose — every protocol assumption is verified directly against live `qorechain-diana` transactions (Step 0 Spike) and installed SDK types.
 - **Human Engineer**: Owns product direction, real-world coherence, key custody (throwaway testnet keys stored outside the repository), faucet funding, registration, final go/no-go calls, and all public releases.
 
@@ -44,7 +44,7 @@ flowchart LR
 
 ## 3. Human vs. AI Responsibility Matrix
 
-| Area | AI Contribution (Model A & Model B) | Human Engineer Contribution |
+| Area | AI Contribution — Model A (`Gemini 4 Neon`) & Model B (`Claude Opus 5.5`) | Human Engineer Contribution |
 |---|---|---|
 | Architecture & threat modeling | Explored candidate concepts; cross-examined trust models, oracle dependencies, and post-quantum threat horizons | Enforced product-market coherence and ethical standards; rejected concepts with weak trust models or disproportionate scope; selected the *Attenua* + institutional treasury fusion |
 | Protocol & kit verification | Queried live `api-testnet.qore.host`, inspected `@qorechain/sdk` types and `qorechain-asset-kit` source/licences | Verified findings independently, resolved conflicting model claims, enforced "Step 0 Spike before final spec" rule |
@@ -78,3 +78,4 @@ Full details with evidence live in [`docs/ai/DECISION_LOG.md`](docs/ai/DECISION_
 - **2026-11-22 — Phase 2 Live 3-Sub-Agent Swarm + 9 Adversarial Attacks (`deployments/live-run-evidence.json`)**: Executed `H1–H7` (Root IPS Mandate, Vendor registration, JIT `fUSD` transfer, `Allocator`/`Payables`/`Research` sub-mandates, ERC-4626 rebalance, 3× atomic `ML-DSA-87` invoice settlement at `673,027` gas, budget reclaim) and `A1–A9` (9/9 on-chain refusals). Caught and fixed an EIP-7623 calldata floor gas false-positive on `A3`/`A5`/`A6` (Catch #10 in `docs/ai/MISTAKES_AND_CATCHES.md`) and hardened `npm run verify` (`agent/src/03-verify.ts`) to assert non-zero EVM gas and non-OOG reasons on every attack.
 - **2026-11-22 — Phase 3 Web Dashboard & Read-Only Live Attack Theatre (`web/`)**: Built a zero-key Vite + React + TypeScript dashboard displaying live `qorechain-diana` contract/account state, the hierarchical delegation tree, the `@qorechain/asset-kit` treasury desk, and the `A1–A9` Attack Theatre with a native `<dialog>` evidence inspector, following `modern-web-guidance` (cascade layers, `light-dark()` + fallbacks, `@container` responsive table, accessible landmarks & focus).
 - **2026-11-22 — Security Documentation**: Authored [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) and [`docs/HONEST_LIMITS.md`](docs/HONEST_LIMITS.md).
+- **2026-11-22 — Figma Design Implementation & Motion Polish (`web/`)**: Implemented the user-authored Figma design (`Overview · Light`, `Overview · Dark`, `Inspector · A5 open`, `Data states`, nested-chevron SVG brand mark & vector connectors) with full `/modern-web-guidance` adherence (smooth scrolling, CSS scroll-progress bar, `view()` scroll reveals, compositor-only transitions, accessible `<dialog>` inspector, and responsive `@container` tables).

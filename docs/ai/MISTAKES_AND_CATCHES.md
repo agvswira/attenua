@@ -1,6 +1,8 @@
 # AI Mistakes, Blind Spots, and Catches Log
 
-This file logs concrete errors made by AI models during the design and build of **Attenua**, how each error was detected, and the exact architectural or test fix applied.
+This log records concrete errors made by AI models during the design and build of **Attenua**, how each error was detected, and the exact architectural or test fix applied.
+
+> Cross-model review pair: **Model A (Gemini 4 Neon)** & **Model B (Claude Opus 5.5)**.
 
 ## Pre-Code & Architecture Phase (2026-11-22)
 
