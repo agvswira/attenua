@@ -66,12 +66,13 @@ All 4 deployed Solidity contracts are source-verified (`full match`, `solc 0.8.2
 
 ---
 
-## 4. Timed Demo Video Script (Target: 2m 45s — Strict ≤ 3m Limit)
+## 4. Final Demo Video Chapter Timing (`2:49.6` — Under Strict ≤ 3m Limit)
 
-| Time | Scene / Visual | Voiceover / Talking Points |
+| Time | Scene / Visual | Summary |
 |---|---|---|
-| **0:00 – 0:25** | Open [`https://attenua.vercel.app/`](https://attenua.vercel.app/) showing thesis heading *"Every agent holds less than its parent."* + live RPC badge `Live · block #...` | *"AI agent teams don't operate as a single script—an Orchestrator spawns Allocator, Payables, and Research sub-agents. On QoreChain, all `MsgExecuteEVM` calls share the same `msg.sender`, so sharing one key lets a prompt-injected sub-agent drain the treasury. Attenua solves this with post-quantum hierarchical capability attenuation."* |
-| **0:25 – 1:05** | Scroll smoothly into **Capability tree**, hover cards, point to `Owner · root mandate`, `Orchestrator`, 3 children (`Allocator`, `Payables`, `Research [0 fUSD]`), `Owner kill-switch`, and `Monitor · AA #2`. | *"Everything starts with three hardware barriers: zero `msg.sender` trust inside `AttenuaVault`, an Orchestrator on Owner AA #1 with Just-in-Time 10 fUSD transfers instead of standing approval, and an isolated freeze-only Monitor on AA #2 holding zero fUSD. Every child narrows budget, ERC-4626 liquidity bands, actions, expiry, and depth."* |
-| **1:05 – 1:50** | Click **`A5`**, **`A7`**, and **`A10`** evidence chips to open the native `<dialog>` inspector; open one tx hash in **QoreChain Explorer**. | *"All 10 adversarial attacks were tested live on `qorechain-diana`. In `A5`, a prompt-injected invoice trying to pay an unlisted attacker is blocked by `VendorNotRegistered`. `A7` shows an 11 fUSD over-cap transfer stopped at the `x/abstractaccount` layer. And `A10` proves our response to an independent blind audit finding (`H-01`), blocking self-delegated zero-budget Research clearance bypasses on-chain."* |
-| **1:50 – 2:15** | Click **Connect QoreX wallet** in the navbar → click `Owner`, `Vendor`, and `Attacker` preset pills in **Wallet & address posture**. | *"Even without a wallet extension, judges can inspect live `pqcKeyStatus` (`0x...0a02`), `HolderGuard` eligibility, and `AttenuaVault` roles directly on-chain."* |
-| **2:15 – 2:45** | Terminal side-by-side: run `cd agent && npm run verify` (`19 PASSED, 0 FAILED`) and `npm test` (`7/7 PASS`), show `AI_USAGE.md` & repo link. | *"Zero keys needed to reproduce: `npm run verify` confirms renounced HolderGuard ownership (`0x0`), closed EVM windows, `9/9` swarm settlements including 3 atomic `ML-DSA-87` signatures per invoice, and `10/10` genuine non-OOG on-chain attack refusals. Built transparently with dual-model adversarial review in `AI_USAGE.md`."* |
+| **0:00 – 0:27** | Intro cards (`s06`, `s07`, `s08`) | Autonomous treasury swarms, `MsgExecuteEVM` shared-key leak risk, and Attenua thesis (*"Every agent holds less than its parent."*) |
+| **0:27 – 0:43** | **Overview** (`s01`) | Live `attenua.vercel.app` Root epoch 2, vault active pill, and live `qorechain-diana` RPC block refresh |
+| **0:43 – 1:24** | **Capability tree** (`s02` + H1 explainer `s10`) | Owner root mandate (`20 fUSD`), Orchestrator (`8 fUSD`), narrowed Allocator/Payables/Research (`0 fUSD`), `registerSubMandate()` explainer, and isolated Monitor AA #2 |
+| **1:24 – 2:05** | **Invariants** (`s03` + H2 explainer `s11`) | 9 invariants ledger, live Attack `A5` (`VendorNotRegistered`) revert inspector, 3-signature `ML-DSA-87` settlement system map, and `A10` (`H-01` fix) |
+| **2:05 – 2:35** | **Treasury** (`s04`) | Oracle-free `6.50 fUSD` ERC-4626 sleeve meter (`50.00%` liquidity), 9-tx happy-path timeline, and keyless QoreX PQC / `HolderGuard` posture inspector |
+| **2:35 – 2:50** | Wrap-Up & Links (`s09`, `s05`) | Full loop summary, live app, GitHub source, and Hallmark verified links |

@@ -10,7 +10,10 @@ coverage/
 .next/
 *.tsbuildinfo
 
-# Secrets & throwaway keys — NEVER commit keys or mnemonics
+# Local demo video renders & scratch workspace
+unveo-out/
+
+# Secrets & throwaway keys - NEVER commit keys or mnemonics
 .env
 .env.*
 !.env.example

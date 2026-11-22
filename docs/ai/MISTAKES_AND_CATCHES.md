@@ -79,3 +79,13 @@ This log records concrete errors made by AI models during the design and build o
     - *Mistake*: `AttenuaVault` v1.0 (1) allowed any depth-1 sub-agent to self-delegate a `budget=0, mask=0` child mandate (`H-01`), bypassing independent Research co-signing; (2) allowed reclaiming a parent mandate while grandchildren remained open (`H-02`); and (3) stored classical `monitorSigner` as `immutable` with no frozen-state ERC-4626 redemption path (`H-03`).
     - *Catch*: Independent zero-context blind security audit documented in [`docs/ai/BLIND_RED_TEAM.md`](BLIND_RED_TEAM.md).
     - *Fix*: Patched all three High findings + `M-03` (`bytes32(0)` rejection) + `L-04` (separate `monitorNonce` & constructor checks) in **`AttenuaVault` v1.1** (`0xf585fc6e1e43446f353830e0d11ff44ce747af58`), added Attack **`A10`** proving `H-01` is refused on-chain (`tx=44F6DBDE...8685`, `131,159` gas), and verified `19/19` checks via `npm run verify`.
+
+15. **Live Browser Testnet RPC `503` Bursts, REST `501`/CORS Failures & SVG Connector Misalignment**
+    - *Mistake*: Firing 6 parallel `eth_call` reads in `web/src/lib/chain.ts` alongside REST queries to `api-testnet.qore.host/cosmos/evm/...` triggered HTTP `503` rate-limiting bursts and browser CORS/`501` console errors, while the Capability Tree 3-way bus and `freeze()` SVG connectors drifted across breakpoints.
+    - *Catch*: Live Browser Verifier subagent inspecting DOM geometry and DevTools console on `https://attenua.vercel.app/`.
+    - *Fix*: Removed unsupported REST endpoints, added `runInPairs` RPC throttling + short-lived cache in `web/src/lib/chain.ts` (`bda98f8`, `1a7d853`), upgraded the wallet modal to EIP-6963 multi-wallet discovery with `0x2648` chain switching, and re-aligned SVG connectors (`0cfa684`) with `0` console errors verified afterward.
+
+16. **Scoped EVM Window Discipline for Hallmark Claim & Demo Video QA Gates**
+    - *Mistake*: Needed to claim all 4 deployed contracts on `HallmarkRegistry` (`0xa901ee7138266abc456c8d717fa94b043078b8c4`) without leaving Owner's EVM window open, and initial Unveo demo rendering hit negative `adelay` on J-cuts and a `1.35×` zoom crop on `.subagents-grid`.
+    - *Catch*: Keyless `npm run verify` window-closed invariant check (`03-verify.ts`) and automated Unveo `qa.py` `framing` + `frames.py` dead-stretch checks.
+    - *Fix*: Executed Hallmark `claimProject()` inside a tightly bracketed open -> claim -> close EVM window (`agent/src/05-claim-hallmark.ts`, `c68b5b5`) verified closed afterward, and re-targeted `s02.4` zoom cleanly onto the middle `Payables` card (`0` dead stretches, all blocking QA gates PASS).
