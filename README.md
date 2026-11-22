@@ -1,11 +1,13 @@
 # Attenua
 
+[![Built on QoreChain](https://build.qorechain.io/badge/attenua.svg)](https://build.qorechain.io/p/attenua) [![Hallmark: full match · PQ-guarded](https://hallmark-jade.vercel.app/api/badge?address=0xf585fc6e1e43446f353830e0d11ff44ce747af58)](https://hallmark-jade.vercel.app/c/0xf585fc6e1e43446f353830e0d11ff44ce747af58)
+
 **Post-Quantum Hierarchical Capability Attenuation for Autonomous Institutional Treasury Swarms on QoreChain.**
 
 > *"Quantum-safe infrastructure is a fiduciary requirement."*
 
 - **Live Demo Dashboard**: [`https://attenua.vercel.app/`](https://attenua.vercel.app/)
-- **Source Verification**: [![Hallmark: full match · PQ-guarded](https://hallmark-jade.vercel.app/api/badge?address=0xf585fc6e1e43446f353830e0d11ff44ce747af58)](https://hallmark-jade.vercel.app/c/0xf585fc6e1e43446f353830e0d11ff44ce747af58)
+- **Source Verification**: [`AttenuaVault` on Hallmark (`full match · PQ-guarded`)](https://hallmark-jade.vercel.app/c/0xf585fc6e1e43446f353830e0d11ff44ce747af58)
 - **Cover Visual**: [`docs/assets/attenua-cover-16x9.png`](docs/assets/attenua-cover-16x9.png)
 - **Network**: QoreChain `qorechain-diana` (EVM Chain ID `9800`)
 
