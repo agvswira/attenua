@@ -28,7 +28,7 @@ In the **Attack the lattice** section, all calls fire straight from your browser
 # 1. 26 read-only live checks on qorechain-diana (+ @qorechain/mcp preflight & QoreScan CBOM)
 cd agent && npm ci && npm run verify
 
-# 2. 9 live keyless eth_call Attack Lab presets from terminal
+# 2. 10 live keyless eth_call Attack Lab presets from terminal
 npm run lab -- ALL
 
 # 3. Agent unit, fuzz (200 runs) & 120-step differential model sync

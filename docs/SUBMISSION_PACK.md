@@ -13,7 +13,7 @@
 - **Live Demo URL**: `https://attenua.vercel.app/`
 - **Cover Image (16:9, `1600×900` PNG)**: `docs/assets/attenua-cover-16x9.png`
 - **Special Awards / Bounties**:
-  - `AI-Native` (`AI_USAGE.md` + `docs/ai/DECISION_LOG.md` + `docs/ai/MISTAKES_AND_CATCHES.md` + `docs/ai/BLIND_RED_TEAM.md` + `docs/ai/AGENT_SESSION.md`)
+  - `AI-Native` (`AI_USAGE.md` + `docs/ai/DECISION_LOG.md` + `docs/ai/MISTAKES_AND_CATCHES.md` + `docs/ai/BLIND_RED_TEAM.md` + `docs/ai/LLM_BENCHMARK.md` + `docs/ai/AGENT_SESSION.md`)
   - `Regional`: `Indonesia`
 
 ---
@@ -39,7 +39,8 @@ qor19nukelxkewjx66v08lx3kunqylsyczqgflfzhq
 - `qorechain-pqc` (TypeScript) — `@qorechain/pqc` `^0.2.3`
 - QoreSign (TypeScript) — `@qorechain/qoresign` `^0.2.0`
 - Asset Kit (TypeScript, Solidity) — `@qorechain/asset-kit` `^0.1.0` + Apache-2.0 `QoreChainHybridHolderGuard` & `QoreChainRwaVault`
-- MCP + `qore` CLI (TypeScript Node.js server) — `agent/src/mcp-server.ts` (`@modelcontextprotocol/sdk`)
+- MCP + `qore` CLI (`@modelcontextprotocol/sdk` server in `agent/src/mcp-server.ts` + `@qorechain/mcp` preflight audit in `agent/src/qore-mcp-preflight.ts`)
+- `@qorechain/qorescan` (CycloneDX 1.6 CBOM inventory in `docs/cbom.json`)
 
 **Network features used (verified live on `qorechain-diana`):**
 - Hybrid `ML-DSA-87` transactions
@@ -66,13 +67,14 @@ All 4 deployed Solidity contracts are source-verified (`full match`, `solc 0.8.2
 
 ---
 
-## 4. Final Demo Video Chapter Timing (`2:49.6` — Under Strict ≤ 3m Limit)
+## 4. Final Demo Video Chapter Timing (`2:52.1` — Under Strict ≤ 3m Limit)
 
 | Time | Scene / Visual | Summary |
 |---|---|---|
-| **0:00 – 0:27** | Intro cards (`s06`, `s07`, `s08`) | Autonomous treasury swarms, `MsgExecuteEVM` shared-key leak risk, and Attenua thesis (*"Every agent holds less than its parent."*) |
-| **0:27 – 0:43** | **Overview** (`s01`) | Live `attenua.vercel.app` Root epoch 2, vault active pill, and live `qorechain-diana` RPC block refresh |
-| **0:43 – 1:24** | **Capability tree** (`s02` + H1 explainer `s10`) | Owner root mandate (`20 fUSD`), Orchestrator (`8 fUSD`), narrowed Allocator/Payables/Research (`0 fUSD`), `registerSubMandate()` explainer, and isolated Monitor AA #2 |
-| **1:24 – 2:05** | **Invariants** (`s03` + H2 explainer `s11`) | 9 invariants ledger, live Attack `A5` (`VendorNotRegistered`) revert inspector, 3-signature `ML-DSA-87` settlement system map, and `A10` (`H-01` fix) |
-| **2:05 – 2:35** | **Treasury** (`s04`) | Oracle-free `6.50 fUSD` ERC-4626 sleeve meter (`50.00%` liquidity), 9-tx happy-path timeline, and keyless QoreX PQC / `HolderGuard` posture inspector |
-| **2:35 – 2:50** | Wrap-Up & Links (`s09`, `s05`) | Full loop summary, live app, GitHub source, and Hallmark verified links |
+| **0:00 – 0:22** | Intro cards (`s01–s03`) | Autonomous treasury swarms, `MsgExecuteEVM` shared-key leak risk, and Attenua thesis (*"Every agent holds less than its parent."*) |
+| **0:22 – 0:34** | **Overview** (`s04`) | Live `attenua.vercel.app` Epoch 2 Standing Tree, active vault badge, and live `qorechain-diana` RPC telemetry |
+| **0:34 – 1:11** | **Capability tree** (`s05` + H1 explainer `s11`) | Owner root (`20 fUSD`), Orchestrator (`AA #1`), Allocator (`6 fUSD`, `[45%, 65%]`) → `AllocatorLeaf` (Depth 2, `2 fUSD`, `[48%, 62%]`), Payables (`2 fUSD`), Research (`0 fUSD`), `registerSubMandate()` explainer, and isolated Monitor (`AA #2`) |
+| **1:11 – 1:55** | **Attack lab & AI Replay** (`s06` + H2 explainer `s12`) | Live keyless `eth_call` reverts, `Make it legal (test Wall 2)` clearing Wall 1 Lattice and hitting Wall 2 `PqcSignatureInvalid` (`0x...0a01`), and live `AI Replay` (`2/20` LLM fooled, `20/20` chain refused, `0 fUSD`) |
+| **1:55 – 2:13** | **Invariants** (`s07`) | 9-invariant ledger, `A10` (`H-01` self-delegation fix) modal inspector, and QoreChain Explorer evidence links |
+| **2:13 – 2:33** | **Treasury** (`s08`) | Oracle-free `6.50 fUSD` ERC-4626 sleeve meter (`50.00%` liquidity inside Allocator `[45%, 65%]`) and 9-tx happy-path run |
+| **2:33 – 2:52** | Wrap-Up & Links (`s09`, `s10`) | Recap of `50/50` Foundry, `26/26` verify, `20/20` LLM refused, `4/4` Hallmark match, plus live app, GitHub & Hallmark URLs |
