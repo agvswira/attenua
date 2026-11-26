@@ -6,9 +6,15 @@ import {
   ERC20_ABI,
   EVIDENCE_FILE,
   FUSD_EVM_ADDRESS,
+  REPO_ROOT,
   REST_URL,
   createEvmPublicClient,
 } from "./config.js";
+import path from "node:path";
+import { runQoreMcpPreflight } from "./qore-mcp-preflight.js";
+
+const STANDING_TREE_FILE = path.join(REPO_ROOT, "deployments", "standing-tree.json");
+const CBOM_FILE = path.join(REPO_ROOT, "docs", "cbom.json");
 
 const GUARD_ABI = parseAbi([
   "function owner() view returns (address)",
@@ -21,6 +27,8 @@ const VAULT_ABI = parseAbi([
   "function monitorSigner() view returns (address)",
   "function rootEpoch() view returns (uint64)",
   "function frozen() view returns (bool)",
+  "function rootMandate() view returns (address,uint256,uint256,uint256,uint16,uint16,uint8,uint8,uint64,uint64,bool)",
+  "function subMandates(bytes32) view returns (bytes32,address,address,uint256,uint256,uint256,uint16,uint16,uint8,uint8,uint64,uint64,bool)",
   "function portfolioSummary() view returns (uint256,uint256,uint256,uint256)",
 ]);
 
@@ -142,6 +150,63 @@ async function main() {
       "Adversarial Attack Suite (genuine on-chain guard refusals, non-OOG)",
       attacksOk && (ev.attacks?.length ?? 0) >= 10,
       `${ev.attacks?.filter((x: { passed: boolean; evmGasUsed?: string; verbatimReason?: string }) => x.passed && Number(x.evmGasUsed ?? "0") > 0 && !(x.verbatimReason ?? "").toLowerCase().includes("insufficient gas")).length}/${ev.attacks?.length} genuine refusals`
+    );
+  }
+
+  // 8. Verify live Epoch 2 Standing Tree (keeps Attack Lab live past Dec 16 judging)
+  if (fs.existsSync(STANDING_TREE_FILE)) {
+    const tree = JSON.parse(fs.readFileSync(STANDING_TREE_FILE, "utf8"));
+    const rm = await evm.readContract({
+      address: dep.contracts.attenuaVault.address,
+      abi: VAULT_ABI,
+      functionName: "rootMandate",
+    });
+    const rmActive = Boolean(rm[10]);
+    const rmEpoch = Number(rm[9]);
+    const rmExpiry = Number(rm[8]);
+    const dec17Utc = Math.floor(Date.parse("2026-12-17T00:00:00Z") / 1000);
+    check(
+      "Standing Root Mandate active on current epoch past judging",
+      rmActive && rmEpoch === Number(epoch) && rmExpiry >= dec17Utc,
+      `active=${rmActive}, epoch=${rmEpoch}, expiry=${new Date(rmExpiry * 1000).toISOString()}`
+    );
+
+    const mandateEntries = Object.entries(tree.mandates ?? {}) as Array<[string, { id: `0x${string}` }]>;
+    for (const [role, m] of mandateEntries) {
+      const sub = await evm.readContract({
+        address: dep.contracts.attenuaVault.address,
+        abi: VAULT_ABI,
+        functionName: "subMandates",
+        args: [m.id],
+      });
+      const open = sub[1] !== "0x0000000000000000000000000000000000000000" && !sub[12] && Number(sub[11]) === Number(epoch);
+      check(`Standing sub-mandate open (${role})`, open, `id=${m.id.slice(0, 14)}..., depth=${sub[9]}, closed=${sub[12]}`);
+    }
+  }
+
+  // 9. Official @qorechain/mcp preflight & QoreScan CBOM check
+  try {
+    const mcp = await runQoreMcpPreflight({
+      ownerCosmos: dep.abstractAccounts.ownerTreasuryAA1.cosmos,
+      orchestratorCosmos: dep.actors.orchestratorPqc.cosmos,
+      payablesCosmos: dep.actors.payables.cosmos,
+      vaultEvm: dep.contracts.attenuaVault.address,
+    });
+    check(
+      "@qorechain/mcp read-only preflight audit",
+      mcp.chainId === "qorechain-diana" && Boolean(mcp.ownerPqStatus),
+      `chainId=${mcp.chainId}, latency=${mcp.latencyMs}ms`
+    );
+  } catch (err) {
+    check("@qorechain/mcp read-only preflight audit", false, err instanceof Error ? err.message : String(err));
+  }
+
+  if (fs.existsSync(CBOM_FILE)) {
+    const cbom = JSON.parse(fs.readFileSync(CBOM_FILE, "utf8")) as { bomFormat?: string; components?: unknown[] };
+    check(
+      "QoreScan CycloneDX CBOM present",
+      cbom.bomFormat === "CycloneDX" && Array.isArray(cbom.components) && cbom.components.length > 0,
+      `format=${cbom.bomFormat}, components=${cbom.components?.length ?? 0}`
     );
   }
 

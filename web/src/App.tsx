@@ -5,6 +5,7 @@ import logoMarkDark from "./assets/logo-mark-dark.svg";
 import timelineDotLight from "./assets/timeline-dot-light.svg";
 import timelineDotDark from "./assets/timeline-dot-dark.svg";
 import { CapabilityTree } from "./components/CapabilityTree";
+import { AttackLab } from "./components/AttackLab";
 import { EvidenceChip } from "./components/EvidenceChip";
 import { InspectorDialog } from "./components/InspectorDialog";
 import { WalletPostureDialog } from "./components/WalletPostureDialog";
@@ -20,6 +21,7 @@ import {
   formatRecordedRunUtc,
   getInspectorItem,
   hallmarkContractUrl,
+  loadCachedSnapshot,
   shortAddr,
   type EvidenceEntry,
   type InspectorItem,
@@ -28,7 +30,7 @@ import {
 import { INVARIANTS } from "./lib/invariants";
 
 type ThemeMode = "light" | "dark" | "system";
-type SectionId = "overview" | "capability-tree" | "invariants" | "treasury";
+type SectionId = "overview" | "capability-tree" | "attack-lab" | "invariants" | "treasury";
 
 interface InjectedProvider {
   isQoreX?: boolean;
@@ -127,7 +129,7 @@ export function App() {
   const scrollSpyLockUntilRef = useRef<number>(0);
 
   useEffect(() => {
-    const sectionIds: SectionId[] = ["overview", "capability-tree", "invariants", "treasury"];
+    const sectionIds: SectionId[] = ["overview", "capability-tree", "attack-lab", "invariants", "treasury"];
     const onScroll = () => {
       setScrolled(window.scrollY > 8);
       if (Date.now() < scrollSpyLockUntilRef.current) return;
@@ -167,6 +169,8 @@ export function App() {
       const snap = await fetchLiveChainSnapshot();
       setLive(snap);
     } catch (err) {
+      const cached = loadCachedSnapshot();
+      if (cached) setLive(cached);
       setRpcError(err instanceof Error ? err.message : "RPC unreachable");
     } finally {
       setLoading(false);
@@ -460,6 +464,7 @@ export function App() {
                 [
                   ["overview", "Overview"],
                   ["capability-tree", "Capability tree"],
+                  ["attack-lab", "Attack lab"],
                   ["invariants", "Invariants"],
                   ["treasury", "Treasury"],
                 ] as const
@@ -524,6 +529,10 @@ export function App() {
           </div>
 
           <div className="vault-state-row" aria-live="polite">
+            <a href="#attack-lab" className="btn btn-primary">
+              Attack the lattice
+            </a>
+
             <div className="meta-pill">
               <span className="meta-label">Root epoch</span>
               <span className="meta-value">{rootEpoch}</span>
@@ -541,7 +550,9 @@ export function App() {
             {loading ? (
               <span className="pill pill-neutral">Connecting to {DEPLOYMENT.network}</span>
             ) : rpcError ? (
-              <span className="pill pill-warn">RPC unreachable · showing recorded run</span>
+              <span className="pill pill-warn">
+                {live?.isCachedFallback ? "Cached snapshot · RPC unreachable" : "RPC unreachable · showing recorded run"}
+              </span>
             ) : live ? (
               <span className="pill pill-ok">Live · block #{live.blockNumber}</span>
             ) : null}
@@ -559,6 +570,9 @@ export function App() {
 
         {/* Capability Tree (Figma 12:20) */}
         <CapabilityTree effectiveTheme={effectiveTheme} live={live} onInspect={handleInspect} />
+
+        {/* Live Keyless Interactive Attack Lab + AI Replay */}
+        <AttackLab live={live} />
 
         {/* Lower Section: Invariants (Left) | Treasury + Run Timeline (Right) */}
         <div className="lower-grid">

@@ -1,0 +1,79 @@
+{
+  "network": "qorechain-diana",
+  "evmChainId": 9800,
+  "vault": "0xf585fc6e1e43446f353830e0d11ff44ce747af58",
+  "installedAt": "2026-11-26T17:13:20.144Z",
+  "epoch": 2,
+  "rootMandate": {
+    "orchestrator": "0x4D33b85Da188577d0e5A23E161Cf00c32ed5ccB3",
+    "budgetMicro": "20000000",
+    "minLiquidityBps": 4000,
+    "maxLiquidityBps": 7000,
+    "actionMask": 3,
+    "maxDepth": 2,
+    "expiryUnix": "1799601148",
+    "expiryIso": "2027-01-10T17:12:28.000Z"
+  },
+  "mandates": {
+    "allocator": {
+      "id": "0xdf4583c29a1f444df1171e9dc72ec456ba3ed2550da40c5b16999a7f26a1f407",
+      "parentId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "issuer": "0x4D33b85Da188577d0e5A23E161Cf00c32ed5ccB3",
+      "subAgent": "0x57Db92cbDd06b5dD29016470b5D2eaD2a519c072",
+      "budgetMicro": "6000000",
+      "allocatedMicro": "2000000",
+      "minLiquidityBps": 4500,
+      "maxLiquidityBps": 6500,
+      "actionMask": 1,
+      "depth": 1,
+      "expiryUnix": "1799169148"
+    },
+    "payables": {
+      "id": "0x18b21825f0ef919efe976ab16f3c1b978f758151a1a88dd823c805a0d5a8082a",
+      "parentId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "issuer": "0x4D33b85Da188577d0e5A23E161Cf00c32ed5ccB3",
+      "subAgent": "0x2003B2003ff46072178e40E6b504FCb6014a97CE",
+      "budgetMicro": "2000000",
+      "allocatedMicro": "0",
+      "minLiquidityBps": 4000,
+      "maxLiquidityBps": 7000,
+      "actionMask": 2,
+      "depth": 1,
+      "expiryUnix": "1799169148"
+    },
+    "research": {
+      "id": "0x095a0c18e6f1537b6e6dd2b22b8d267169e413bad52443eb509cb168b29db81d",
+      "parentId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "issuer": "0x4D33b85Da188577d0e5A23E161Cf00c32ed5ccB3",
+      "subAgent": "0x69F29191b758aA1413407d8548Cd8b9c77c63B58",
+      "budgetMicro": "0",
+      "allocatedMicro": "0",
+      "minLiquidityBps": 4000,
+      "maxLiquidityBps": 7000,
+      "actionMask": 0,
+      "depth": 1,
+      "expiryUnix": "1799169148"
+    },
+    "allocatorLeaf": {
+      "id": "0xb015d132e593efa6cee26669d7591fb2b6ae50e94b0023fd7807fdd2188d3953",
+      "parentId": "0xdf4583c29a1f444df1171e9dc72ec456ba3ed2550da40c5b16999a7f26a1f407",
+      "issuer": "0x57Db92cbDd06b5dD29016470b5D2eaD2a519c072",
+      "subAgent": "0x2003B2003ff46072178e40E6b504FCb6014a97CE",
+      "budgetMicro": "2000000",
+      "allocatedMicro": "0",
+      "minLiquidityBps": 4800,
+      "maxLiquidityBps": 6200,
+      "actionMask": 1,
+      "depth": 2,
+      "expiryUnix": "1798737148"
+    }
+  },
+  "txs": {
+    "root": "D957F7C228865643011AB172A8B6E9AB3AABDE2226369FCCB0DE188EE1D12E1C",
+    "allocator": "199BD2F42511DE3FD9D3EF018028E825B32EF0F36F72675512AB0459865C4580",
+    "payables": "DC73C8CA7EA2A75D5952D5EAB427F9028782866771DB3A4E35F28DC65CE0164E",
+    "research": "EC3A5F2C9B76238610C4A434B6BAFA9649E859A171C0FCD922C8E16D58F1803F",
+    "allocatorLeaf": "A00CE29290BB3B7F4125D0F58904576CF5F8B4AFB86B95FAF302EDBE1704D68F"
+  },
+  "paidInvoiceId": "0x4dc0e87a212b9c6eb532b4d70a082be1695c28590265615182672de8a5e7aba5"
+}

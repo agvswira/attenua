@@ -9,23 +9,32 @@
 
 **Post-Quantum Hierarchical Capability Attenuation for Autonomous Institutional Treasury Swarms on QoreChain.**
 
-> *"Every agent holds less than its parent."*
+> *"Compromise any agent. Try giving it more power than its parent. The chain refuses — live, keyless, and naming the violated invariant."*
 
-[Live Dashboard](https://attenua.vercel.app/) · [Hallmark Source Proof](https://hallmark-jade.vercel.app/c/0xf585fc6e1e43446f353830e0d11ff44ce747af58) · [Architecture](#architecture) · [10 Refused Attacks](#live-verified-swarm-h1-h7--10-refused-attacks-a1-a10) · [60s Keyless Verify](#60-second-keyless-verification) · [AI-Native Log](AI_USAGE.md)
+[Live Dashboard & Attack Lab](https://attenua.vercel.app/#attack-lab) · [5-Min Judge Walkthrough](JUDGES.md) · [Hallmark Source Proof](https://hallmark-jade.vercel.app/c/0xf585fc6e1e43446f353830e0d11ff44ce747af58) · [20-Invoice LLM Benchmark](docs/ai/LLM_BENCHMARK.md) · [AI-Native Ledger](AI_USAGE.md)
+
+---
+
+## Try It in 30 Seconds (Zero Keys, Zero Server)
+
+Open [**Attack the Lattice**](https://attenua.vercel.app/#attack-lab) or run `cd agent && npm run lab -- ALL`:
+
+1. **Hierarchical Transitivity (`Depth-2`)**: Pretend `Allocator` (`[45%, 65%]`) is compromised and try delegating `[41%, 69%]` — legal for Root `[40%, 70%]`, yet live `eth_call` on `AttenuaVault` v1.1 (`0xf585...af58`) reverts with **`AttenuationBandWidened(4100, 6900, 4500, 6500)`** (`I4`).
+2. **Depth-3 Overflow**: Delegate under depth-2 `AllocatorLeaf` (`maxDepth = 2`) -> **`AttenuationDepthExceeded(3, 2)`**.
+3. **Two-Wall Separation ("Make it legal")**: Narrow parameters inside parent bounds so **Wall 1 (Capability Lattice)** allows the shape, then QoreChain precompile `0x...0a01` blocks it at **Wall 2 (`PqcSignatureInvalid`)**.
+4. **Untrusted LLM Proof ([`docs/ai/LLM_BENCHMARK.md`](docs/ai/LLM_BENCHMARK.md))**: We ran **20 prompt-injected invoices** through live `eiai/claude-sonnet-5.5` — the model was **fooled `2/20` times** (`INJ-15`, `INJ-20`), **`AttenuaVault` refused `20/20` via live `eth_call`**, and **`0 fUSD` moved** (`SHA-256: 25ba17ee...cb799`).
 
 ---
 
 ## Why Attenua?
 
-Production AI treasury desks run an **Orchestrator** that delegates tasks to specialized sub-agents (*Allocator*, *Payables*, *Research*). Under QoreChain's `x/abstractaccount` `MsgExecuteEVM`, every sub-agent relays through the parent account's `0x` origin (`msg.sender` aliasing verified in Step 0 Spike **S1**). Sharing one key lets a prompt-injected sub-agent drain the vault; requiring human owner sign-off on every micro-task destroys autonomy.
+Production AI treasury desks run an **Orchestrator** spawning specialized sub-agents (*Allocator*, *Payables*, *Research*). Under QoreChain `x/abstractaccount` `MsgExecuteEVM`, linked keys share the parent account's `0x` origin (`msg.sender` aliasing verified in Step 0 Spike **S1**). Sharing one key lets one prompt-injected sub-agent drain the vault; requiring human owner sign-off per micro-task breaks autonomy.
 
 | Approach | Autonomy | Blast Radius on Sub-Agent Compromise | Post-Quantum Authorization |
 |---|---|---|---|
 | **Shared Linked Key** | High | Full account treasury & standing allowances | Broken once delegated key leaks |
 | **Cold Owner Sign-Off** | None | Contained, but human bottleneck per action | `ML-DSA-87` per click |
-| **Attenua Capability Lattice** | **Full autonomous swarm** | **Capped per child mandate (`Research = 0 fUSD`) + O(1) kill-switch** | **Fail-closed `ML-DSA-87` (`0x...0a02` → `0x...0a01`)** |
-
-**Attenua** brings hierarchical cryptographic capability attenuation (inspired by **UCAN** and **Biscuit**) to QoreChain's post-quantum EVM + Cosmos `x/abstractaccount` stack, managing `fUSD` ERC-4626 treasury vaults (`@qorechain/asset-kit`, Apache-2.0 components only).
+| **Attenua Capability Lattice** | **Full autonomous swarm** | **Strict monotonic ceiling per child + depth + `O(1)` kill-switch** | **Zero `msg.sender` trust · `ML-DSA-87` (`0x...0a02` -> `0x...0a01`)** |
 
 ---
 
@@ -34,146 +43,77 @@ Production AI treasury desks run an **Orchestrator** that delegates tasks to spe
 ```mermaid
 flowchart TD
   Owner["Owner Cold Root (ML-DSA-87 Root Key)"] -->|setRootMandate / revokeRootEpoch| Vault
-  AA1["Owner Treasury AA #1 (Single Linked Key: Orchestrator · 10 fUSD/tx · 25 fUSD/day · Zero ERC-20 Allowance)"] -->|JIT fUSD.transfer & MsgExecuteEVM| Vault["AttenuaVault v1.1 (Zero msg.sender Trust · Monotonic Lattice)"]
+  AA1["Owner Treasury AA #1 (Single Linked Key: Orchestrator · 10 fUSD/tx · 25 fUSD/day · Zero Allowance)"] -->|JIT fUSD.transfer & MsgExecuteEVM| Vault["AttenuaVault v1.1 (Zero msg.sender Trust · Epoch 2 Standing Tree)"]
   AA2["Isolated Monitor AA #2 (0 fUSD · 1 uqor/day · Allowed Call: freeze only)"] -->|freeze monotonic stop| Vault
   Vault -->|pqcKeyStatus & pqcVerify| Precompiles["QoreChain PQC Precompiles (0x...0a02 & 0x...0a01)"]
-  Vault -->|sub-mandate 6 fUSD · band 45%-65%| Allocator["Allocator (ERC-4626 Rebalance · Oracle-Free convertToAssets)"]
-  Vault -->|sub-mandate 2 fUSD · PAY_INVOICE only| Payables["Payables (3x Atomic ML-DSA-87 Invoice Settlement)"]
-  Vault -->|sub-mandate 0 fUSD · mask 0| Research["Research (Read-Only MCP Prompt-Injection Screener)"]
-  Allocator -->|rebalance| Guard["QoreChainHybridHolderGuard (Owner Renounced 0x0000...0000)"]
+  Vault -->|6 fUSD · band 45%-65% · depth 1| Allocator["Allocator (ERC-4626 Rebalance · Oracle-Free)"]
+  Allocator -->|2 fUSD · band 48%-62% · depth 2| Leaf["AllocatorLeaf (Standing Depth-2 Child)"]
+  Vault -->|2 fUSD · PAY_INVOICE · depth 1| Payables["Payables (3x Atomic ML-DSA-87 Invoice Settlement)"]
+  Vault -->|0 fUSD · mask 0 · depth 1| Research["Research (Read-Only MCP Clearance Co-Signer)"]
+  Allocator -->|rebalance| Guard["QoreChainHybridHolderGuard (Owner Renounced 0x0)"]
   Guard --> LV["LiquidityVault (ERC-4626 fUSD)"]
   Guard --> RV["ReserveVault (ERC-4626 fUSD)"]
 ```
 
 ### Core Guarantees
-
-1. **Zero `msg.sender` Trust & Fail-Closed PQC (`AttenuaVault.sol`, `PqcVerifier.sol`)**
-   No `onlyOwner` or `msg.sender` authorization anywhere. Every spend, delegation, vendor update, or emergency loosen verifies domain-separated `ML-DSA-87` signatures through `PqcVerifier` (`pqcKeyStatus` at `0x...0a02` requiring `possessionProven == true`, followed by `pqcVerify` at `0x...0a01`).
-2. **Monotonic Capability Lattice (5 On-Chain Invariants)**
-   `registerSubMandate()` checks child budget conservation ($\sum \text{child} + \text{parent} \le \text{root}$), narrowed allocation band (`[childMinBps, childMaxBps] ⊆ [parentMinBps, parentMaxBps]`), action-mask subset, monotonic expiry & depth, and separation of duties (child cannot self-delegate a zero-budget clearance mandate — `H-01` patch), with O(1) revocation via `revokeRootEpoch()`.
-3. **Dual-Account `x/abstractaccount` Ceilings**
-   - **AA #1 (`Owner Treasury`)**: Treasury `fUSD` never grants ERC-20 `allowance` to `AttenuaVault`. A single linked Orchestrator key transfers working `fUSD` Just-in-Time under `denom_limits` (`10 fUSD/tx`, `25 fUSD/day`).
-   - **AA #2 (`Monitor`)**: Isolated account holding `0 fUSD` and `1 uqor/day`, locked strictly to selector `0xbd2d305f` (`AttenuaVault.freeze()`). Only Owner's `ML-DSA-87` key can `unfreeze()`.
-4. **3-Sub-Agent Treasury Swarm (`@qorechain/asset-kit`)**
-   - **`Allocator`**: Rebalances `LiquidityVault` and `ReserveVault` (Apache-2.0 ERC-4626 `QoreChainRwaVault` sleeves) behind `QoreChainHybridHolderGuard` (ownership renounced after exempting `AttenuaVault`), reading portfolio ratios on-chain via `convertToAssets()` with zero external oracle.
-   - **`Payables`**: Settles allowlisted vendor invoices in one atomic transaction verifying **3× `ML-DSA-87` signatures** (`Payables` + `Vendor` + `Research`, `662,807` gas in `H6`).
-   - **`Research` (`0 fUSD`, `mask = 0`)**: Screens unstructured vendor invoices for prompt injections using read-only `@qorechain/mcp` tools (`agent/src/mcp-server.ts`) and co-signs clearance verdicts without holding capability to spend `1 uqor`.
+1. **Zero `msg.sender` Trust & Fail-Closed PQC (`AttenuaVault.sol`, `PqcVerifier.sol`)** — No `onlyOwner`. Every state-loosening call verifies domain-separated `ML-DSA-87` signatures through `pqcKeyStatus` (`0x...0a02`, `possessionProven == true`) and `pqcVerify` (`0x...0a01`).
+2. **Monotonic Capability Lattice (5 On-Chain Invariants)** — Budget conservation ($\sum \text{child} + \text{parent} \le \text{root}$), narrowed ERC-4626 band (`[childMin, childMax] ⊆ [parentMin, parentMax]`), action-mask subset, monotonic expiry & depth, and separation of duties (`H-01` anti-self-delegation), with `O(1)` revocation via `revokeRootEpoch()`.
+3. **Dual-Account `x/abstractaccount` Ceilings** — Zero ERC-20 `allowance` on `AA #1` (Just-in-Time `denom_limits`: `10 fUSD/tx`, `25 fUSD/day`) and isolated `Monitor AA #2` (`0 fUSD`, `1 uqor/day`, locked to `freeze()`).
+4. **3-Sub-Agent Treasury Swarm (`@qorechain/asset-kit`)** — Oracle-free ERC-4626 `Allocator`, 3× atomic `ML-DSA-87` `Payables` (`662,807` gas in `H6`), and `0 fUSD` `Research` MCP/LLM screener.
 
 ---
 
-## Live Verified Swarm (`H1–H7`) & 10 Refused Attacks (`A1–A10`)
-
-Every happy-path transaction and adversarial attack below ran live on `qorechain-diana` (Chain ID `9800`), recorded verbatim in [`deployments/live-run-evidence.json`](deployments/live-run-evidence.json) and inspectable without private keys in the live Attack Theatre on [`https://attenua.vercel.app/`](https://attenua.vercel.app/).
+## Live Verification, Foundry Invariants & Attack Suite
 
 <details>
-<summary><strong>Happy-Path Run: 9 Transactions Verified (H1–H7)</strong></summary>
+<summary><strong>Recorded Live Run: 9 Happy-Path Transactions (H1–H7) & 10 Refused Attacks (A1–A10)</strong></summary>
 
-| Step | Action |
-|---|---|
-| `H1` | Owner installs Root IPS Mandate (`20 fUSD`, liquidity band `[40%, 70%]`, `ML-DSA-87`) |
-| `H2` | Owner registers `ML-DSA-87`-proven Vendor |
-| `H3` | Orchestrator transfers `8 fUSD` Just-in-Time (`AA #1` `denom_limits`, zero standing allowance) |
-| `H4a` | Orchestrator delegates `Allocator` (`6 fUSD`, narrowed band `[45%, 65%]`, `BIT_ALLOCATE`) |
-| `H4b` | Orchestrator delegates `Payables` (`2 fUSD`, `BIT_PAY_INVOICE`) |
-| `H4c` | Orchestrator delegates `Research` (`0 fUSD`, `mask = 0`, zero-budget clearance screener) |
-| `H5` | `Allocator` rebalances `3 fUSD` LiquidityVault + `3 fUSD` ReserveVault (`50.00%` liquidity, oracle-free) |
-| `H6` | `Payables` settles `1.5 fUSD` invoice with 3× atomic `ML-DSA-87` signatures (`Payables` + `Vendor` + `Research`) |
-| `H7` | Orchestrator reclaims unspent `0.5 fUSD` from `Payables` sub-mandate |
+- **`H1–H7` (`deployments/live-run-evidence.json`)**: Root IPS setup, `ML-DSA-87` vendor onboarding, JIT `8 fUSD` transfer, 3 delegated sub-mandates (`H4a–H4c`), oracle-free `50.00%` ERC-4626 rebalance (`H5`), 3× atomic `ML-DSA-87` settlement (`H6`, `662,807` gas), and unspent `0.5 fUSD` reclaim (`H7`).
+- **`A1–A10` (`deployments/live-run-evidence.json`)**: Band widening (`A1`), budget breach (`A2`), confused deputy (`A3`), zero-budget breakout (`A4`), unlisted attacker transfer (`A5`), invoice replay (`A6`), `AA #1` cap breach (`A7`), monotonic freeze lock (`A8`), `O(1)` epoch kill-switch (`A9`, `212,347` gas), and `H-01` self-delegation block (`A10`, `131,159` gas).
+- **Live Standing Tree (`deployments/standing-tree.json`)**: Active on **Epoch 2** (`expiry: 2027-01-10T17:12:28Z`, past Dec 16 judging) so browser and CLI `eth_call` probes remain live without private keys.
 
 </details>
 
-| Attack | Scenario | Layer / Guard That Stopped It | Live EVM Gas |
-|---|---|---|---|
-| `A1` | Widen IPS liquidity band (`[30%, 80%]` vs root `[40%, 70%]`) | `AttenuaVault` (`AttenuationBandWidened`) | `121,067` |
-| `A2` | Sibling collusion breaching parent budget (`8 + 15 > 20 fUSD`) | `AttenuaVault` (`AttenuationBudgetExceeded`) | `120,869` |
-| `A3` | Confused deputy (`Payables` reuses `Allocator` mandate ID) | `AttenuaVault` (`ActionNotPermitted`) | `262,782` |
-| `A4` | Zero-budget breakout (`Research` attempts spend) | `AttenuaVault` (`ZeroBudgetCapability` / `ActionNotPermitted`) | `111,018` |
-| `A5` | Prompt-injected invoice to unlisted attacker address | `AttenuaVault` (`VendorNotRegistered`) | `256,038` |
-| `A6` | Duplicate invoice replay using spent `invoiceId` | `AttenuaVault` (`InvoiceAlreadyPaid`) | `271,387` |
-| `A7` | Just-in-Time protocol cap breach (`11 fUSD > 10 fUSD/tx`) | `x/abstractaccount` (`spending limit exceeded`) | `34,477` |
-| `A8` | Classical `Monitor` (`AA #2`) freezes vault; cannot unfreeze | `AA #2` Lock + `AttenuaVault` (`VaultIsFrozen`) | `54,037` |
-| `A9` | O(1) cascading kill-switch drops epoch & revokes `AA #1` key | `AttenuaVault.revokeRootEpoch()` + `MsgRevokeAuthenticator` | `212,347` |
-| `A10` | Self-delegated zero-budget clearance bypass (`Blind Audit H-01`) | `AttenuaVault` (`SelfDelegationNotAllowed` / `SeparationOfDuties`) | `131,159` |
+| Verification Suite | Scope & Method | Result |
+|---|---|---|
+| `cd contracts && forge test --no-dynamic-test-linking` | **48** unit & audit-regression tests + **256×32** stateful invariants (`8,192` calls) + **120-step** Solidity/TS differential suite *(precompiles `0x0a01`/`0x0a02` mocked via `vm.etch`; real PQC proven live on Diana)* | **50/50 PASS** |
+| `cd agent && npm run verify` | Keyless read-only chain verifier: 4 contracts, renounced guard, `AA #1`/`AA #2`, Standing Tree Epoch 2, `@qorechain/mcp` preflight & `QoreScan` CBOM (`docs/cbom.json`) | **26/26 PASS** |
+| `cd agent && npm run lab -- ALL` | Keyless live `eth_call` presets against `AttenuaVault` v1.1 (`A1`, `TRANSITIVITY`, `DEPTH3`, `A2`, `A4`, `A5`, `A6`, `A10`, `LEGAL`, `CLASSICAL`) | **10/10 PASS** |
+| `cd agent && npm test && npm run typecheck` | 14 `ML-DSA-87` helpers, 200 JS fuzz runs, prompt screener, 120-step differential trace & OpenAI-compatible mock test | **9/9 PASS** |
+| `cd agent && npm run bench:llm` | Live 20 prompt-injected invoices (`eiai/claude-sonnet-5.5`) replayed via `eth_call` | **Fooled 2/20 · Chain Refused 20/20 · 0 fUSD** |
+| `npx @agvswira/hallmark check 0xf585fc6e1e43446f353830e0d11ff44ce747af58` | Independent local `solc 0.8.28` bytecode match across all 4 contracts | **4/4 full match** |
 
 ---
 
-## Live Deployment & Hallmark Verification (`qorechain-diana`, Chain ID `9800`)
+## Live Deployment (`qorechain-diana`, Chain ID `9800`)
 
-All 4 Solidity contracts are compiled with `solc 0.8.28+commit.7893614a` (`viaIR`, `cancun`), source-verified as **full match** on Hallmark, and `ML-DSA-87`-claimed to `https://github.com/agvswira/attenua` inside strictly closed scoped EVM windows (`deployments/qorechain-diana.json`).
-
-| Contract / Account | Address | Verification & Hardening Status |
+| Contract / Account | Address | Verification Status |
 |---|---|---|
-| `AttenuaVault` (v1.1) | [`0xf585fc6e1e43446f353830e0d11ff44ce747af58`](https://hallmark-jade.vercel.app/c/0xf585fc6e1e43446f353830e0d11ff44ce747af58) | Hallmark **full match** (`PQ-guarded: pqcVerify + pqcKeyStatus`); blind-audit hardened (`H-01..H-03`, `L-04`) |
-| `QoreChainHybridHolderGuard` | [`0xf70c001e482a1112ec76684ddec4ffe3bff4c652`](https://hallmark-jade.vercel.app/c/0xf70c001e482a1112ec76684ddec4ffe3bff4c652) | Hallmark **full match** (`PQ-guarded: pqcKeyStatus`); `exempt(AttenuaVault) = true`; `owner = 0x0000...0000` (renounced); EVM window closed |
-| `LiquidityVault` (ERC-4626 `fUSD`) | [`0xb5cf1d53872255bed60ebb731e9043b7c9ff2c8b`](https://hallmark-jade.vercel.app/c/0xb5cf1d53872255bed60ebb731e9043b7c9ff2c8b) | Hallmark **full match**; Apache-2.0 `@qorechain/asset-kit` `QoreChainRwaVault` |
-| `ReserveVault` (ERC-4626 `fUSD`) | [`0x5b914270db69cee65762c75edf1e1ce2856cc72b`](https://hallmark-jade.vercel.app/c/0x5b914270db69cee65762c75edf1e1ce2856cc72b) | Hallmark **full match**; Apache-2.0 `@qorechain/asset-kit` `QoreChainRwaVault` |
-| Owner Treasury (`AA #1`) | `qor1k4xryjqufhdh44hgsqdpj5llr7y3dwyfenxfqg` | Single linked authenticator (Orchestrator only); `fUSD` cap `10/tx`, `25/day`; zero ERC-20 allowance |
+| `AttenuaVault` (v1.1) | [`0xf585fc6e1e43446f353830e0d11ff44ce747af58`](https://hallmark-jade.vercel.app/c/0xf585fc6e1e43446f353830e0d11ff44ce747af58) | Hallmark **full match** (`pqcVerify + pqcKeyStatus`); blind-audit hardened (`H-01..H-03`, `L-04`) |
+| `QoreChainHybridHolderGuard` | [`0xf70c001e482a1112ec76684ddec4ffe3bff4c652`](https://hallmark-jade.vercel.app/c/0xf70c001e482a1112ec76684ddec4ffe3bff4c652) | Hallmark **full match**; `exempt(AttenuaVault) = true`; `owner = 0x0` (renounced) |
+| `LiquidityVault` (ERC-4626 `fUSD`) | [`0xb5cf1d53872255bed60ebb731e9043b7c9ff2c8b`](https://hallmark-jade.vercel.app/c/0xb5cf1d53872255bed60ebb731e9043b7c9ff2c8b) | Hallmark **full match** (`@qorechain/asset-kit`) |
+| `ReserveVault` (ERC-4626 `fUSD`) | [`0x5b914270db69cee65762c75edf1e1ce2856cc72b`](https://hallmark-jade.vercel.app/c/0x5b914270db69cee65762c75edf1e1ce2856cc72b) | Hallmark **full match** (`@qorechain/asset-kit`) |
+| Owner Treasury (`AA #1`) | `qor1k4xryjqufhdh44hgsqdpj5llr7y3dwyfenxfqg` | Single linked key (`Orchestrator`); `fUSD` cap `10/tx`, `25/day`; zero allowance |
 | Isolated Monitor (`AA #2`) | `qor10vv75f5qwca5hra7ye0vxwemz2t6q6lv28m7d4` | `0 fUSD`, `1 uqor/day`, locked strictly to `AttenuaVault.freeze()` (`0xbd2d305f`) |
 
 ---
 
-## 60-Second Keyless Verification
-
-Zero private keys or wallet extensions are required to verify live `qorechain-diana` bytecode, renounced guard ownership, closed EVM windows, `AA #1`/`AA #2` limits, registered `ML-DSA-87` keys, cryptographic invariants, and recorded attack proofs:
-
-```bash
-cd agent
-npm install
-npm run verify      # 19/19 read-only live checks on qorechain-diana
-npm test            # 7/7 suites: 14 ML-DSA-87 helpers, 200 property/fuzz runs, prompt screener & chain assertions
-npm run screen:demo # Run zero-budget Research prompt-injection screener against live chain state
-npm run typecheck   # TypeScript verification
-npx @agvswira/hallmark check 0xf585fc6e1e43446f353830e0d11ff44ce747af58
-```
-
-### Run the Dashboard Locally
-
-```bash
-cd web
-npm install
-npm run dev
-```
-
----
-
-## Step 0 Empirical Testnet Spike (`S1–S8: 8/8 PASS`)
-
-Before writing production contracts, every QoreChain protocol assumption was probed live on `SpikeProbe` (`0xe4bf5d52d9ea33fcf3515ae3ee55841df847c626`, block `10513230` — [`docs/SPIKE_RESULTS.md`](docs/SPIKE_RESULTS.md)):
-
-- **`S1–S8` all passed empirically**, uncovering `msg.sender` aliasing under `MsgExecuteEVM`, `x/abstractaccount` `denom_limits` + `allowed_evm_calls`, inactive `0x...0b02` return behavior, and single-account rule sharing across authenticators (`S8`).
-- Measured live EVM gas for fail-closed `PqcVerifier`: **1× = `249,133`**, **2× = `430,499`**, **3× = `629,738`**.
-
----
-
-## Repository Structure & Documentation
-
-```text
-attenua/
-├── contracts/src/            # AttenuaVault.sol (v1.1) & PqcVerifier.sol
-├── contracts/vendor/         # Apache-2.0 @qorechain/asset-kit guard & ERC-4626 vaults
-├── agent/src/                # Deploy, live H1-H7 + A1-A10 runner, 19-check verifier, MCP server, Hallmark claim
-├── agent/test/               # Unit, ML-DSA-87, 200-run fuzz, prompt screener & live tests
-├── web/                      # Read-only Attack Theatre, Capability Tree & keyless QoreX/HolderGuard inspector
-├── spike/                    # Step 0 empirical protocol probes (S1–S8)
-├── deployments/              # Canonical qorechain-diana addresses, tx hashes & attack evidence
-└── docs/                     # Architecture spec, threat model, honest limits & AI engineering logs
-```
+## Documentation
 
 | Document | Purpose |
 |---|---|
-| [`AI_USAGE.md`](AI_USAGE.md) | Dual-model adversarial engineering record for the **Best AI-Native Build** award |
+| [`JUDGES.md`](JUDGES.md) | 5-minute keyless judge walkthrough (Attack Lab, AI Replay, Kill-Switch, CLI) |
+| [`AI_USAGE.md`](AI_USAGE.md) | Falsifiable Claims Ledger for the **Best AI-Native Build** award |
+| [`docs/ai/LLM_BENCHMARK.md`](docs/ai/LLM_BENCHMARK.md) | Full 20-invoice `eiai/claude-sonnet-5.5` prompt-injection & on-chain `eth_call` log |
 | [`docs/ai/BLIND_RED_TEAM.md`](docs/ai/BLIND_RED_TEAM.md) | Zero-context blind security audit uncovering `H-01..H-03` & v1.1 remediation |
-| [`docs/ai/MISTAKES_AND_CATCHES.md`](docs/ai/MISTAKES_AND_CATCHES.md) | 16 concrete AI errors caught before or during deployment, with fixes |
-| [`docs/ai/AGENT_SESSION.md`](docs/ai/AGENT_SESSION.md) | Live `Research` sub-agent prompt-injection screening transcript via `@qorechain/mcp` |
-| [`docs/SPEC.md`](docs/SPEC.md) | Post-spike capability lattice specification |
-| [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) | Adversary model, invariants (`I1–I9`), and attack matrix (`A1–A10`) |
-| [`docs/HONEST_LIMITS.md`](docs/HONEST_LIMITS.md) | Explicit engineering boundaries, EIP-7623 calldata floor, and deferred items |
-| [`docs/SUBMISSION_PACK.md`](docs/SUBMISSION_PACK.md) | Submission checklist, form fields, and demo chapter breakdown |
+| [`docs/ai/MISTAKES_AND_CATCHES.md`](docs/ai/MISTAKES_AND_CATCHES.md) | 16 concrete AI errors caught before or during deployment, with regression fixes |
+| [`docs/cbom.json`](docs/cbom.json) | CycloneDX 1.6 cryptographic inventory (`npm run cbom`) |
+| [`docs/SPEC.md`](docs/SPEC.md) · [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) · [`docs/HONEST_LIMITS.md`](docs/HONEST_LIMITS.md) | Protocol lattice spec, adversary invariants (`I1–I9`), and explicit boundaries |
 
 ---
 
 ## Credits & Licence
 
 - Prior art credited: **UCAN** and **Biscuit** (adapted to EVM smart accounts with NIST `ML-DSA-87`).
-- Built on **QoreChain** (`@qorechain/sdk`, `@qorechain/pqc`, `@qorechain/qoresign`, `@qorechain/asset-kit`).
+- Built on **QoreChain** (`@qorechain/sdk`, `@qorechain/evm`, `@qorechain/pqc`, `@qorechain/qoresign`, `@qorechain/asset-kit`, `@qorechain/mcp`, `@qorechain/qorescan`) with source verification via **Hallmark** (`@agvswira/hallmark`) and Foundry testing via **OpenZeppelin Contracts** and **`forge-std`** (MIT / Apache-2.0).
 - Licensed under **Apache-2.0** ([`LICENSE`](LICENSE)).

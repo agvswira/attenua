@@ -1,0 +1,63 @@
+name: Attenua CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  contracts-foundry:
+    name: Foundry Unit, Invariant & Differential Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install OpenZeppelin & forge-std
+        working-directory: contracts
+        run: |
+          npm ci
+          git clone --depth 1 https://github.com/foundry-rs/forge-std.git lib/forge-std
+      - name: Verify solc 0.8.28 deterministic compile
+        working-directory: contracts
+        run: npx tsx scripts/compile.ts
+      - name: Run 48 unit + 256x32 invariant + 120-step differential tests
+        working-directory: contracts
+        run: forge test -vv --no-dynamic-test-linking
+
+  agent-and-web:
+    name: Agent Tests, Typecheck & Web Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Agent typecheck & offline + differential tests
+        working-directory: agent
+        run: |
+          npm ci
+          npm run typecheck
+          npm test
+      - name: Web TypeScript & Vite production build
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+  keyless-diana-verify:
+    name: Keyless qorechain-diana Live Invariants & Lab
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run keyless live chain verification & Attack Lab probes
+        working-directory: agent
+        run: |
+          npm ci
+          npm run verify
+          npm run lab -- ALL
