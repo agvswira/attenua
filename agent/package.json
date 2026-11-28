@@ -22,7 +22,6 @@
     "@modelcontextprotocol/sdk": "^1.12.0",
     "@noble/curves": "^1.8.1",
     "@qorechain/asset-kit": "^0.1.0",
-    "@qorechain/evm": "^0.14.0",
     "@qorechain/mcp": "^0.1.1",
     "@qorechain/pqc": "^0.2.3",
     "@qorechain/qorescan": "^0.1.0",

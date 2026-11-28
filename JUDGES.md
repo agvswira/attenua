@@ -4,6 +4,20 @@ No private keys, wallet extensions, or API keys are required to verify every sec
 
 ---
 
+## Track Requirements → Direct Evidence (`Post-Quantum AI Agents`)
+
+| Track Requirement | Implementation (`file:line`) | On-Chain Tx / Live State | Keyless Check Command |
+|---|---|---|---|
+| **Scoped EVM window** | [`agent/src/01-deploy-all.ts:342-352`](agent/src/01-deploy-all.ts), [`03-verify.ts:86-89`](agent/src/03-verify.ts), [`05-claim-hallmark.ts`](agent/src/05-claim-hallmark.ts) | Owner AA #1 EVM window opened scoped for deploy & closed (`live=false`) | `cd agent && npm run verify` |
+| **Tx / value / duration / target limits** | [`AttenuaVault.sol:455-575`](contracts/src/AttenuaVault.sol), [`01-deploy-all.ts:342-352`](agent/src/01-deploy-all.ts) | Root `20 fUSD`, `maxDepth 2`, `expiry` & per-child lattice (`H1–H7`, `A1–A10`) | `cd agent && npm run lab -- ALL` |
+| **Smart-account spending rules** | `AA #1` (`10 fUSD/tx`, `25 fUSD/day`, zero ERC-20 allowance) + `AA #2` (`0 fUSD`, `1 uqor/day`, `freeze()` selector `0xbd2d305f` only) in [`03-verify.ts:90-108`](agent/src/03-verify.ts) | `A7` (`BD069AFF...8B7D6`), `A8` (`8111C7BD...5B88`) | `cd agent && npm run verify` |
+| **Authenticated inter-agent messaging** | Research → Payables + Orchestrator clearance signed with `@qorechain/qoresign` (`ML-DSA-87`) & sealed with `@qorechain/qoreseal` (`ML-KEM-1024`) | Pending P1 commit (adds `authenticated-messaging.ts` + live `MsgRegisterKEMKey` tx) | `cd agent && npm test` |
+
+> **Why Attack Txs Show Cosmos `code = 0` on Explorer:** In QoreChain `x/abstractaccount` `MsgExecuteEVM`, an inner EVM contract revert marks the transaction with an `abstractaccount_execution_failed` event while the outer Cosmos wrapper keeps `code = 0` so gas/replay accounting holds cleanly. Check both the `abstractaccount_execution_failed` attribute and the historical `height - 1` `eth_call` custom-error decode (implemented in `agent/src/decode-historical-attacks.ts` in the next commit).
+> **QoreScan CBOM Usage:** `@qorechain/qorescan` runs directly via the `cbom` CLI script (`cd agent && npm run cbom`) to generate [`docs/cbom.json`](docs/cbom.json) (13 CycloneDX components), verified by [`03-verify.ts:204-211`](agent/src/03-verify.ts).
+
+---
+
 ## 0:00 — Architecture & Live Capability Tree
 Open [`https://attenua.vercel.app/`](https://attenua.vercel.app/):
 - The **Capability Tree** reflects live `AttenuaVault` Epoch `2`, showing `Owner (20 fUSD)` -> `Orchestrator` -> `Allocator (6 fUSD, [45%, 65%])`, `Payables (2 fUSD)`, `Research (0 fUSD, mask 0)`, and a depth-2 child (`AllocatorLeaf`, `2 fUSD`, `[48%, 62%]`), flanked by the O(1) `revokeRootEpoch()` kill-switch and isolated classical `Monitor` (`AA #2`, `0 fUSD`).

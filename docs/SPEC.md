@@ -70,10 +70,10 @@ Modern AI treasury operations run as **multi-agent swarms** (an Orchestrator del
   2. `setVendor(vendor, allowed, nonce, deadline, ownerPqcSig)` — Owner `ML-DSA-87` manages vendor allowlist (requires vendor `possessionProven == true`).
   3. `registerSubMandate(params, parentPqcSig)` — Orchestrator `ML-DSA-87` issues attenuated sub-mandate to `Allocator`, `Payables`, or `Research` (`budget = 0`, `actionMask = 0`). Verified once & stored.
   4. `reclaimSubMandate(mandateId, parentPqcSig)` — Reclaims unspent budget from closed/expired child mandate back to parent.
-  5. `executeAllocate(mandateId, targetVault, isDeposit, amount, nonce, deadline, subAgentPqcSig)`:
-     - Checks `!frozen`, `mandate.rootEpoch == rootEpoch`, `block.timestamp <= mandate.expiry`, `(actionMask & BIT_ALLOCATE) != 0`, `budget - spent >= amount`.
-     - Verifies `Allocator`'s `ML-DSA-87` sig (domain-separated: `chainId`, `vault`, `mandateId`, `rootEpoch`, `targetVault`, `isDeposit`, `amount`, `nonce`, `deadline`).
-     - Executes `deposit`/`withdraw` on the allowlisted ERC-4626 `fUSD` vault.
+  5. `executeAllocate(mandateId, liqAmount, liqIsDeposit, resAmount, resIsDeposit, nonce, deadline, subAgentPqcSig)`:
+     - Checks `!frozen`, `mandate.rootEpoch == rootEpoch`, `block.timestamp <= mandate.expiry`, `(actionMask & BIT_ALLOCATE) != 0`, and `budget - spent >= liqAmount + resAmount` (`grossVolume`, an intentional gross turnover cap at `AttenuaVault.sol:692` that prevents infinite wash-rebalancing inside one mandate).
+     - Verifies `Allocator`'s `ML-DSA-87` sig (domain-separated: `chainId`, `vault`, `rootEpoch`, `mandateId`, `liqAmount`, `liqIsDeposit`, `resAmount`, `resIsDeposit`, `nonce`, `deadline`).
+     - Executes `withdraw`/`deposit` on the allowlisted ERC-4626 `fUSD` vaults (`LiquidityVault` / `ReserveVault`).
      - **Post-trade IPS weight invariant**: Computes `liquidityBps = liqAssets * 10000 / (liqAssets + resAssets)` via `convertToAssets()` and reverts if outside `[mandate.minLiquidityBps, mandate.maxLiquidityBps]`!
   6. `executePayInvoice(mandateId, vendor, invoiceId, amount, nonce, deadline, payablesPqcSig, vendorPqcSig, researchAgent, researchPqcSig)`:
      - Checks `!frozen`, `mandate.rootEpoch == rootEpoch`, `block.timestamp <= mandate.expiry`, `(actionMask & BIT_PAY_INVOICE) != 0`, `registeredVendors[vendor]`, `!usedInvoices[invoiceKey]`, `budget - spent >= amount`.

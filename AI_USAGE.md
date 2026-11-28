@@ -1,6 +1,32 @@
 # AI Usage — Attenua
 
 > Falsifiable engineering ledger for the **Best AI-Native Build** award. Every claim below links to a specific model/subagent, file path or commit, and a **keyless verification command or `qorechain-diana` tx** a juror can rerun directly.
+>
+> **Transparency notes:** (1) Initial 22 Nov commits (`0aaa528`–`6167981`) show git author `"unknown"` because `git config user.name` was set locally on 27 Nov (GitHub push attribution remains `agvswira`); commits from `813a4c7` onward are attributed and split cleanly per feature. (2) `"Gemini 4 Neon"` and `"Claude Opus 5.5"` are the exact UI model names displayed in our Antigravity IDE session, and `eiai/claude-sonnet-5.5` is the literal model slug invoked against the OpenAI-compatible router `https://eiairouter.cloud/v1` (re-runnable with any OpenAI-compatible provider via `OPENAI_BASE_URL` / `OPENAI_MODEL` / `npm run bench:llm`). Repository operating rules live in [`AGENTS.md`](AGENTS.md).
+
+## Check It Yourself (Keyless Commands & Expected Output)
+
+```bash
+# 1. Agent TypeScript typecheck + unit/fuzz/differential suite
+cd agent && npm ci && npm run typecheck && npm test
+# Expected: typecheck exits 0; unit/fuzz/differential suite all PASS
+
+# 2. Keyless read-only on-chain verifier (@qorechain/mcp + QoreScan CBOM + Diana live state)
+cd agent && npm run verify
+# Expected: Summary: 26 PASSED, 0 FAILED (increases in P1 as KEM registry & decoder checks land)
+
+# 3. 10-preset keyless live Attack Lab against AttenuaVault v1.1 (0xf585...af58)
+cd agent && npm run lab -- ALL
+# Expected: Lab Summary: 10 PASSED, 0 FAILED (including AttenuationBandWidened, AttenuationDepthExceeded, SelfDelegationNotAllowed, PqcSignatureInvalid)
+
+# 4. Regenerate CycloneDX 1.6 CBOM via QoreScan CLI
+cd agent && npm run cbom
+# Expected: writes docs/cbom.json (CycloneDX, 13 components)
+
+# 5. Foundry Solidity tests + stateful invariants + 120-step differential trace
+cd contracts && forge test --no-dynamic-test-linking
+# Expected: 50/50 PASS (48 unit/regression + invariant_budgetConservation + invariant_fusdConservationAndStandingTree + AttenuaDifferential; mocks 0x0a01/0x0a02 locally)
+```
 
 ## 1. Falsifiable Claims Ledger
 

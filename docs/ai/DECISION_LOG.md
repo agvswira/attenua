@@ -2,7 +2,7 @@
 
 This log records the candidate architectures evaluated before writing production code, why weak ideas were rejected on first-principles technical or product-coherence grounds, and the live QoreChain findings that shaped **Attenua**.
 
-> Cross-model review pair: **Model A (Gemini 4 Neon)** & **Model B (Claude Opus 5.5)**.
+> Cross-model review pair: **Model A (`Gemini 4 Neon`, IDE UI display name)** & **Model B (`Claude Opus 5.5`, IDE UI display name)** (see repository rules in [`AGENTS.md`](../../AGENTS.md)).
 
 ## Round 1 — Rejected Candidates
 

@@ -7,7 +7,7 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Network: qorechain-diana (9800)](https://img.shields.io/badge/Network-qorechain--diana%20(9800)-10b981.svg)](deployments/qorechain-diana.json)
 
-**Post-Quantum Hierarchical Capability Attenuation for Autonomous Institutional Treasury Swarms on QoreChain.**
+**When an AI treasury agent is prompt-injected or its key leaks, a shared wallet key lets it drain the entire account.** Attenua is built for institutional and DAO treasury desks running autonomous sub-agents (*Allocator*, *Payables*, *Research*) on QoreChain: every sub-agent holds a strictly smaller on-chain ceiling than its parent—budget, liquidity band, allowed actions, expiry, and delegation depth—enforced before 3× NIST `ML-DSA-87` post-quantum signatures, with sealed inter-agent verdicts (`QoreSign` + `QoreSeal`).
 
 > *"Compromise any agent. Try giving it more power than its parent. The chain refuses — live, keyless, and naming the violated invariant."*
 
@@ -38,7 +38,7 @@ Production AI treasury desks run an **Orchestrator** spawning specialized sub-ag
 
 ---
 
-## Architecture
+## Architecture: Post-Quantum Hierarchical Capability Attenuation
 
 ```mermaid
 flowchart TD
