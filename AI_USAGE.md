@@ -11,9 +11,9 @@
 cd agent && npm ci && npm run typecheck && npm test
 # Expected: typecheck exits 0; 10/10 tests PASS (5 suites)
 
-# 2. Keyless read-only on-chain verifier (KEM registry, archive A1/A10 replay, @qorechain/mcp + QoreScan CBOM)
+# 2. Keyless read-only on-chain verifier (KEM registry, live heartbeat, archive A1/A10 replay, @qorechain/mcp + QoreScan CBOM)
 cd agent && npm run verify
-# Expected: Summary: 31 PASSED, 0 FAILED
+# Expected: Summary: 32 PASSED, 0 FAILED
 
 # 3. 10-preset keyless live Attack Lab against AttenuaVault v1.1 (0xf585...af58)
 cd agent && npm run lab -- ALL
@@ -109,4 +109,4 @@ Full 16-item log lives in [`docs/ai/MISTAKES_AND_CATCHES.md`](docs/ai/MISTAKES_A
 
 - **2026-11-22 (`0aaa528`–`6167981`):** Step 0 Diana Spike (`S1–S8` pass); deployed v1.0; ran zero-context blind audit -> patched `H-01..H-03` in `AttenuaVault` v1.1 (`0xf585...af58`) with `H1–H7`, `A1–A10`, `4/4` Hallmark `full match`, Figma dashboard & Unveo `2:49.6` video.
 - **2026-11-27 (Hardening Wave — v1.1 Frozen):** Installed live Epoch 2 Standing Tree expiring `2027-01-10` (`06-install-standing-tree.ts`); added `48` Foundry unit tests + `256×32` stateful invariants + `120`-step TS/Solidity differential test (`50/50 PASS`); integrated `@qorechain/mcp` preflight & `QoreScan` CBOM (`docs/cbom.json`, `26/26` verify); built keyless browser **Attack the Lattice** + **AI Replay** (`AttackLab.tsx`, `10/10` CLI lab); ran live 20-invoice `eiai/claude-sonnet-5.5` benchmark (`2/20 fooled -> 20/20 chain refused -> 0 fUSD`); added `JUDGES.md` and `.github/workflows/ci.yml`; rebuilt 2K Unveo demo video (`2:52.1`, QA PASS) & refreshed 16:9 Epoch 2 cover image (`6f49606`).
-- **2026-11-29 (P0+P1 Audit Remediation):** Removed unused `@qorechain/*` kit deps, added `AGENTS.md`, plain-language `README`, and `JUDGES` track map (`0aa794f`); built Diana `height - 1` archive decoder (`4c92893`, `10/10` `A1–A10` custom errors decoded); implemented `@qorechain/qoresign` + `@qorechain/qoreseal` (`ML-KEM-1024 + X25519`) authenticated Research → Payables clearance with live on-chain `MsgRegisterKEMKey` registrations (`A84387CE...79DCCCEF`, `7CD72E4A...501F5D9EB`, `d0f1d24`, `31/31` verify & `10/10` unit tests); surfaced decoded reverts & QoreSeal clearance proof in web UI + refreshed CBOM.
+- **2026-11-29 (P0+P1 Audit Remediation & P3 Live Heartbeat):** Removed unused `@qorechain/*` kit deps, added `AGENTS.md`, plain-language `README`, and `JUDGES` track map (`0aa794f`); built Diana `height - 1` archive decoder (`4c92893`, `10/10` `A1–A10` custom errors decoded); implemented `@qorechain/qoresign` + `@qorechain/qoreseal` (`ML-KEM-1024 + X25519`) authenticated Research → Payables clearance with live on-chain `MsgRegisterKEMKey` registrations (`A84387CE...79DCCCEF`, `7CD72E4A...501F5D9EB`, `d0f1d24`, `01c5329`); added live zero-root-key `0.01 fUSD` heartbeat settlement (`8C722903...1DA42`, block `10924829`, `3797e3e`, `32/32` verify & `10/10` unit tests) plus dashboard telemetry.

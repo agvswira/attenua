@@ -74,12 +74,12 @@ flowchart TD
 
 </details>
 
-- **Dual-Layer PQC Messaging**: Research signs invoice clearance digests via `@qorechain/qoresign` (`ML-DSA-87`) + `@qorechain/pqc` (`SHAKE-256`) and seals them to registered `ML-KEM-1024` keys via `@qorechain/qoreseal` ([`deployments/authenticated-message.json`](deployments/authenticated-message.json)).
+- **Dual-Layer PQC Messaging**: Research signs invoice clearance digests via `@qorechain/qoresign` (`ML-DSA-87`) + `@qorechain/pqc` (`SHAKE-256`) and seals them to registered `ML-KEM-1024` keys via `@qorechain/qoreseal` ([`deployments/authenticated-message.json`](deployments/authenticated-message.json)), plus an autonomous zero-root-key live heartbeat ([`deployments/heartbeat.json`](deployments/heartbeat.json), [`.github/workflows/agent-heartbeat.yml`](.github/workflows/agent-heartbeat.yml)).
 
 | Verification Suite | Scope & Method | Result |
 |---|---|---|
 | `cd contracts && forge test --no-dynamic-test-linking` | **48** unit & audit-regression tests + **256×32** stateful invariants (`8,192` calls) + **120-step** Solidity/TS differential suite *(precompiles `0x0a01`/`0x0a02` mocked via `vm.etch`; real PQC proven live on Diana)* | **50/50 PASS** |
-| `cd agent && npm run verify` | Keyless read-only chain verifier: 4 contracts, renounced guard, `AA #1`/`AA #2`, Standing Tree Epoch 2, on-chain `ML-KEM-1024` + `QoreSeal` cards, `height - 1` archive attack replay (`A1–A10`), `@qorechain/mcp` preflight & `QoreScan` CBOM | **31/31 PASS** |
+| `cd agent && npm run verify` | Keyless read-only chain verifier: 4 contracts, renounced guard, `AA #1`/`AA #2`, Standing Tree Epoch 2, on-chain `ML-KEM-1024` + `QoreSeal` cards, live `0.01 fUSD` heartbeat `usedInvoices` check, `height - 1` archive attack replay (`A1–A10`), `@qorechain/mcp` preflight & `QoreScan` CBOM | **32/32 PASS** |
 | `cd agent && npm run lab -- ALL` | Keyless live `eth_call` presets against `AttenuaVault` v1.1 (`A1`, `TRANSITIVITY`, `DEPTH3`, `A2`, `A4`, `A5`, `A6`, `A10`, `LEGAL`, `CLASSICAL`) | **10/10 PASS** |
 | `cd agent && npm run decode:attacks` | Replays historical on-chain `A1–A10` attack txs via Diana archive `eth_call` at block `height - 1` | **10/10 decoded** |
 | `cd agent && npm test && npm run typecheck` | 14 `ML-DSA-87` helpers, 200 JS fuzz runs, `QoreSign`+`QoreSeal` hybrid roundtrip/tamper guards, prompt screener, 120-step diff & LLM mock | **10/10 PASS** |

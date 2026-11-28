@@ -14,6 +14,7 @@ import evidence from "@deployments/live-run-evidence.json";
 import standingTree from "@deployments/standing-tree.json";
 import decodedAttacks from "@deployments/decoded-attacks.json";
 import authenticatedMessage from "@deployments/authenticated-message.json";
+import heartbeat from "@deployments/heartbeat.json";
 
 export const EVM_RPC_URL = "https://evm-testnet.qore.host";
 export const EXPLORER_BASE = "https://dashboard.qorechain.io/explorer";
@@ -29,6 +30,7 @@ export type LiveRunEvidence = typeof evidence;
 export type StandingTreeManifest = typeof standingTree;
 export type DecodedAttacksManifest = typeof decodedAttacks;
 export type AuthenticatedMessageManifest = typeof authenticatedMessage;
+export type HeartbeatManifest = typeof heartbeat;
 
 export interface EvidenceEntry {
   id: string;
@@ -115,6 +117,7 @@ export const EVIDENCE: LiveRunEvidence = evidence;
 export const STANDING_TREE: StandingTreeManifest = standingTree;
 export const DECODED_ATTACKS: DecodedAttacksManifest = decodedAttacks;
 export const AUTHENTICATED_MESSAGE: AuthenticatedMessageManifest = authenticatedMessage;
+export const HEARTBEAT: HeartbeatManifest = heartbeat;
 
 export const ADDRESS_PRESETS: Array<{ label: string; address: Address }> = [
   { label: "Owner", address: DEPLOYMENT.abstractAccounts.ownerTreasuryAA1.evm as Address },
@@ -335,14 +338,15 @@ export function getInspectorItem(
   if (chipId === "verify") {
     const guardOwner = live ? live.guardOwner : DEPLOYMENT.contracts.holderGuard.ownerAfterRenounce;
     const monFusd = live ? formatFusd(live.monitorFusdBalance) : "0.00 fUSD";
+    const latestHb = HEARTBEAT.runs?.[0];
     return {
       id: "verify",
       kind: "check",
       eyebrow: "verify · Keyless CLI audit (cd agent && npm run verify)",
-      title: "31 read-only on-chain, KEM, archive & MCP checks pass without private keys",
+      title: "32 read-only on-chain, KEM, heartbeat, archive & MCP checks pass without private keys",
       pillTone: "ok",
-      pillLabel: "31 passed, 0 failed",
-      subtitle: "Verifies deployed bytecode, Epoch 2 standing tree, KEM registry, height-1 archive reverts, @qorechain/mcp preflight & QoreScan CBOM",
+      pillLabel: "32 passed, 0 failed",
+      subtitle: "Verifies deployed bytecode, Epoch 2 standing tree, KEM registry, live PQ heartbeat, height-1 archive reverts, @qorechain/mcp & QoreScan CBOM",
       actorLabel: "Runner",
       actorValue: "Keyless JSON-RPC, Cosmos REST, Archive EVM & @qorechain/mcp",
       layerLabel: "Target chain",
@@ -353,8 +357,9 @@ export function getInspectorItem(
         `Monitor AA #2 fUSD      = ${monFusd} (live EVM RPC · freeze() 0xbd2d305f only)`,
         `Standing Root Mandate   = active=${live ? String(live.rootMandateActive) : "true"} (Epoch ${live ? live.rootEpoch : standingTree.epoch})`,
         `KEM Registry (ML-KEM)   = OrchestratorPqc #${authenticatedMessage.kemRegistry.orchestratorPqc.registeredHeight} · Payables #${authenticatedMessage.kemRegistry.payables.registeredHeight}`,
+        `Live PQ Heartbeat       = ${latestHb ? `${latestHb.runId} @ block #${latestHb.blockHeight} (${latestHb.timestampUtc})` : "pending"}`,
         `Archive Decoder         = ${decodedAttacks.totalAttacks}/10 historical A1-A10 reverts decoded @ height - 1`,
-        `QoreScan CBOM           = docs/cbom.json (CycloneDX 1.6)`,
+        `QoreScan CBOM           = docs/cbom.json (CycloneDX 1.6 · 16 components)`,
         `Command                 = cd agent && npm install && npm run verify`,
       ].join("\n"),
     };

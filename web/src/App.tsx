@@ -15,6 +15,7 @@ import {
   EVIDENCE,
   EVM_RPC_URL,
   EXPLORER_BASE,
+  HEARTBEAT,
   QORE_CHAIN_HEX,
   explorerTxUrl,
   fetchLiveChainSnapshot,
@@ -49,6 +50,17 @@ interface Eip6963AnnounceDetail {
     rdns?: string;
   };
   provider: InjectedProvider;
+}
+
+function formatRelativeTime(iso: string): string {
+  const ms = Date.now() - Date.parse(iso);
+  if (!Number.isFinite(ms) || ms < 0) return iso;
+  const mins = Math.floor(ms / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 48) return `${hrs} hr ago`;
+  return `${Math.floor(hrs / 24)} d ago`;
 }
 
 const TIMELINE_DESCRIPTIONS: Record<string, string> = {
@@ -650,6 +662,70 @@ export function App() {
             {`${AUTHENTICATED_MESSAGE.envelope.text.slice(0, 140)}…\nSHAKE-256: ${AUTHENTICATED_MESSAGE.verifiedClearance.shake256Digest} · Payables & OrchestratorPqc unsealed + ML-DSA-87 verified on-chain`}
           </pre>
         </section>
+
+        {/* Live Autonomous Agent Heartbeat */}
+        {HEARTBEAT.runs?.[0] && (
+          <section
+            id="heartbeat"
+            className="surface-card reveal-card"
+            aria-labelledby="heartbeat-heading"
+          >
+            <div className="card-head">
+              <div className="card-title-group">
+                <h2 id="heartbeat-heading" className="card-title">
+                  Live Autonomous Agent Heartbeat
+                </h2>
+                <p className="card-desc">
+                  Scheduled sub-agent loop (<code>Research</code> QoreSign + QoreSeal →{" "}
+                  <code>Payables</code> 3× <code>ML-DSA-87</code> settlement). Zero Owner Root key
+                  held by runner.
+                </p>
+              </div>
+              <span className="pill pill-ok">
+                Last settlement: {formatRelativeTime(HEARTBEAT.lastRunUtc)} · Zero Owner Root Key
+              </span>
+            </div>
+
+            <div className="holdings-list">
+              <div className="holding-row">
+                <span className="holding-name">
+                  Latest 0.01 fUSD PQ Settlement ({HEARTBEAT.runs[0].runId})
+                </span>
+                <span className="holding-amount">
+                  block #{HEARTBEAT.runs[0].blockHeight.toLocaleString()} ·{" "}
+                  {Number(HEARTBEAT.runs[0].evmGasUsed).toLocaleString()} gas
+                </span>
+                <a
+                  className="holding-addr"
+                  href={explorerTxUrl(HEARTBEAT.runs[0].txHash)}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={`Live heartbeat tx · ${HEARTBEAT.runs[0].txHash}`}
+                >
+                  {shortAddr(HEARTBEAT.runs[0].txHash)} ↗
+                </a>
+              </div>
+              <div className="holding-row">
+                <span className="holding-name">Payables Cumulative Spend vs. Ceiling</span>
+                <span className="holding-amount">
+                  {formatFusd(BigInt(HEARTBEAT.runs[0].payablesSpentAfterMicro))} /{" "}
+                  {formatFusd(BigInt(HEARTBEAT.runs[0].payablesBudgetMicro))}
+                </span>
+                <span className="holding-addr mono">{HEARTBEAT.totalRuns} live run(s)</span>
+              </div>
+              <div className="holding-row">
+                <span className="holding-name">QoreSeal Envelope &amp; Screening Mode</span>
+                <span className="holding-amount">
+                  {HEARTBEAT.runs[0].qoreSealEnvelopeBytes.toLocaleString()} bytes ·{" "}
+                  {HEARTBEAT.runs[0].screeningMode}
+                </span>
+                <span className="holding-addr mono">
+                  {formatRecordedRunUtc(HEARTBEAT.runs[0].timestampUtc)}
+                </span>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Lower Section: Invariants (Left) | Treasury + Run Timeline (Right) */}
         <div className="lower-grid">

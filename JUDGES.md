@@ -39,7 +39,7 @@ In the **Attack the lattice** section, all calls fire straight from your browser
 ## 4:00 — Terminal Verification (Keyless)
 
 ```bash
-# 1. 31 read-only live checks on qorechain-diana (KEM registry, archive decoder, @qorechain/mcp & QoreScan CBOM)
+# 1. 32 read-only live checks on qorechain-diana (KEM registry, live heartbeat, archive decoder, @qorechain/mcp & QoreScan CBOM)
 cd agent && npm ci && npm run verify
 
 # 2. 10 live keyless eth_call Attack Lab presets + 10 historical height-1 archive attack decoders
