@@ -9,7 +9,7 @@ import {QoreChainRwaVault} from "../vendor/asset-kit/vaults/QoreChainRwaVault.so
 import {MockFusd} from "./mocks/MockFusd.sol";
 import {PqcKeyStatusMock, PqcVerifyMock} from "./mocks/PqcPrecompileMock.sol";
 
-/// @notice Focused 48-test unit & regression suite for AttenuaVault v1.1 + PqcVerifier + asset-kit integration.
+/// @notice Focused 52-test unit (+ invariant) suite for AttenuaVault v1.2 + PqcVerifier + asset-kit integration.
 ///         NOTE: QoreChain precompiles 0x0a01 / 0x0a02 are mocked via vm.etch; real ML-DSA-87 verification
 ///         is proven live on qorechain-diana (`deployments/live-run-evidence.json` & `deployments/standing-tree.json`).
 contract AttenuaVaultTest is Test {
@@ -451,6 +451,8 @@ contract AttenuaVaultTest is Test {
             ONE_FUSD,
             pN,
             dl,
+            dl,
+            dl,
             new bytes(4627),
             new bytes(4627),
             new bytes(4627)
@@ -507,7 +509,18 @@ contract AttenuaVaultTest is Test {
         uint64 dl = uint64(block.timestamp + 3600);
         vm.expectRevert(AttenuaVault.SeparationOfDutiesViolated.selector);
         vault.executePayInvoice(
-            payId, payResSame, vendor, keccak256("INV-SOD"), ONE_FUSD, pN, dl, new bytes(4627), new bytes(4627), new bytes(4627)
+            payId,
+            payResSame,
+            vendor,
+            keccak256("INV-SOD"),
+            ONE_FUSD,
+            pN,
+            dl,
+            dl,
+            dl,
+            new bytes(4627),
+            new bytes(4627),
+            new bytes(4627)
         );
     }
 
@@ -686,11 +699,13 @@ contract AttenuaVaultTest is Test {
         bytes32 invId = keccak256("INV-001");
 
         vm.expectRevert(AttenuaVault.InvalidAmount.selector);
-        vault.executePayInvoice(payId, researchId, vendor, invId, 0, 0, dl, new bytes(4627), new bytes(4627), new bytes(4627));
+        vault.executePayInvoice(
+            payId, researchId, vendor, invId, 0, 0, dl, dl, dl, new bytes(4627), new bytes(4627), new bytes(4627)
+        );
 
         vm.expectRevert(abi.encodeWithSelector(AttenuaVault.VendorNotRegistered.selector, stranger));
         vault.executePayInvoice(
-            payId, researchId, stranger, invId, ONE_FUSD, 0, dl, new bytes(4627), new bytes(4627), new bytes(4627)
+            payId, researchId, stranger, invId, ONE_FUSD, 0, dl, dl, dl, new bytes(4627), new bytes(4627), new bytes(4627)
         );
     }
 
@@ -706,18 +721,88 @@ contract AttenuaVaultTest is Test {
             payables, abi.encodePacked("attenua-v1|PAY_INVOICE|", block.chainid, address(vault), ep, payId, vendor, invId, amt, pN, dl)
         );
         bytes memory vSig = _mockPqcSign(
-            vendor, abi.encodePacked("attenua-v1|VENDOR_INVOICE|", block.chainid, address(vault), vendor, invId, amt)
+            vendor, abi.encodePacked("attenua-v1|VENDOR_INVOICE|", block.chainid, address(vault), vendor, invId, amt, dl)
         );
         bytes memory rSig = _mockPqcSign(
-            research, abi.encodePacked("attenua-v1|RESEARCH_CLEAR|", block.chainid, address(vault), ep, researchId, vendor, invId, amt)
+            research, abi.encodePacked("attenua-v1|RESEARCH_CLEAR|", block.chainid, address(vault), ep, researchId, vendor, invId, amt, dl)
         );
 
-        vault.executePayInvoice(payId, researchId, vendor, invId, amt, pN, dl, pSig, vSig, rSig);
+        vault.executePayInvoice(payId, researchId, vendor, invId, amt, pN, dl, dl, dl, pSig, vSig, rSig);
         assertEq(fusd.balanceOf(vendor), amt);
 
         uint64 pN2 = vault.nonces(payables);
         bytes32 invKey = keccak256(abi.encodePacked(vendor, invId));
         vm.expectRevert(abi.encodeWithSelector(AttenuaVault.InvoiceAlreadyPaid.selector, invKey));
-        vault.executePayInvoice(payId, researchId, vendor, invId, amt, pN2, dl, pSig, vSig, rSig);
+        vault.executePayInvoice(payId, researchId, vendor, invId, amt, pN2, dl, dl, dl, pSig, vSig, rSig);
+    }
+
+    // -------------------------------------------------------------------------
+    // 6. v1.2 Audit Hardening: maxDepth <= 16 & Vendor/Research Deadlines (49-52)
+    // -------------------------------------------------------------------------
+
+    function test_49_setRootMandateRejectsMaxDepthAbove16() public {
+        uint64 expiry = uint64(block.timestamp + 30 days);
+        uint64 n = vault.nonces(owner);
+        uint64 dl = uint64(block.timestamp + 3600);
+        vm.expectRevert(abi.encodeWithSelector(AttenuaVault.AttenuationDepthExceeded.selector, 17, 16));
+        vault.setRootMandate(orchestrator, 20 * ONE_FUSD, 4000, 7000, 3, 17, expiry, n, dl, new bytes(4627));
+    }
+
+    function test_50_executePayInvoiceRejectsExpiredVendorValidUntil() public {
+        _setupStandingSwarm();
+        uint64 dl = uint64(block.timestamp + 3600);
+        uint64 expiredVendorDl = uint64(block.timestamp - 1);
+        bytes32 invId = keccak256("INV-EXP-V");
+        uint64 pN = vault.nonces(payables);
+
+        vm.expectRevert(abi.encodeWithSelector(AttenuaVault.SignatureExpired.selector, expiredVendorDl, block.timestamp));
+        vault.executePayInvoice(
+            payId, researchId, vendor, invId, 500_000, pN, dl, expiredVendorDl, dl, new bytes(4627), new bytes(4627), new bytes(4627)
+        );
+    }
+
+    function test_51_executePayInvoiceRejectsExpiredResearchDeadline() public {
+        _setupStandingSwarm();
+        uint64 dl = uint64(block.timestamp + 3600);
+        uint64 expiredResDl = uint64(block.timestamp - 1);
+        bytes32 invId = keccak256("INV-EXP-R");
+        uint64 pN = vault.nonces(payables);
+
+        vm.expectRevert(abi.encodeWithSelector(AttenuaVault.SignatureExpired.selector, expiredResDl, block.timestamp));
+        vault.executePayInvoice(
+            payId, researchId, vendor, invId, 500_000, pN, dl, dl, expiredResDl, new bytes(4627), new bytes(4627), new bytes(4627)
+        );
+    }
+
+    function test_52_executePayInvoiceBindsVendorAndResearchDeadlinesInSig() public {
+        _setupStandingSwarm();
+        uint64 dl = uint64(block.timestamp + 3600);
+        uint64 altDl = dl + 600;
+        bytes32 invId = keccak256("INV-BIND");
+        uint256 amt = 500_000;
+        uint64 ep = vault.rootEpoch();
+        uint64 pN = vault.nonces(payables);
+
+        bytes memory pSig = _mockPqcSign(
+            payables, abi.encodePacked("attenua-v1|PAY_INVOICE|", block.chainid, address(vault), ep, payId, vendor, invId, amt, pN, dl)
+        );
+        bytes memory vSigSignedAtDl = _mockPqcSign(
+            vendor, abi.encodePacked("attenua-v1|VENDOR_INVOICE|", block.chainid, address(vault), vendor, invId, amt, dl)
+        );
+        bytes memory rSigSignedAtDl = _mockPqcSign(
+            research, abi.encodePacked("attenua-v1|RESEARCH_CLEAR|", block.chainid, address(vault), ep, researchId, vendor, invId, amt, dl)
+        );
+
+        // Tampering vendorValidUntil without vendor re-signing rejects at Vendor signature verification
+        vm.expectRevert(abi.encodeWithSelector(PqcVerifier.PqcSignatureInvalid.selector, vendor));
+        vault.executePayInvoice(payId, researchId, vendor, invId, amt, pN, dl, altDl, dl, pSig, vSigSignedAtDl, rSigSignedAtDl);
+
+        // Tampering researchDeadline without research re-signing rejects at Research signature verification
+        uint64 pN2 = vault.nonces(payables);
+        bytes memory pSig2 = _mockPqcSign(
+            payables, abi.encodePacked("attenua-v1|PAY_INVOICE|", block.chainid, address(vault), ep, payId, vendor, invId, amt, pN2, dl)
+        );
+        vm.expectRevert(abi.encodeWithSelector(PqcVerifier.PqcSignatureInvalid.selector, research));
+        vault.executePayInvoice(payId, researchId, vendor, invId, amt, pN2, dl, dl, altDl, pSig2, vSigSignedAtDl, rSigSignedAtDl);
     }
 }

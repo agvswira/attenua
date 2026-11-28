@@ -40,6 +40,7 @@ contract AttenuaVault is ReentrancyGuard {
     uint8 public constant BIT_ALL = BIT_ALLOCATE | BIT_PAY_INVOICE;
 
     uint16 public constant MAX_BPS = 10_000;
+    uint8 public constant MAX_ANCESTOR_HOPS = 16;
 
     IERC20 public immutable fusd;
     IERC4626 public immutable liquidityVault;
@@ -220,6 +221,7 @@ contract AttenuaVault is ReentrancyGuard {
         }
         if (expiry <= block.timestamp) revert MandateExpired(expiry, block.timestamp);
         if (maxDepth == 0) revert AttenuationDepthExceeded(1, 0);
+        if (maxDepth > MAX_ANCESTOR_HOPS) revert AttenuationDepthExceeded(maxDepth, MAX_ANCESTOR_HOPS);
 
         _consumeNonceAndDeadline(rootOwner, nonce, deadline);
 
@@ -735,6 +737,8 @@ contract AttenuaVault is ReentrancyGuard {
         uint256 amount,
         uint64 nonce,
         uint64 deadline,
+        uint64 vendorValidUntil,
+        uint64 researchDeadline,
         bytes calldata payablesPqcSig,
         bytes calldata vendorPqcSig,
         bytes calldata researchPqcSig
@@ -767,6 +771,8 @@ contract AttenuaVault is ReentrancyGuard {
 
         bytes32 invoiceKey = keccak256(abi.encodePacked(vendor, invoiceId));
         if (usedInvoices[invoiceKey]) revert InvoiceAlreadyPaid(invoiceKey);
+        if (block.timestamp > vendorValidUntil) revert SignatureExpired(vendorValidUntil, block.timestamp);
+        if (block.timestamp > researchDeadline) revert SignatureExpired(researchDeadline, block.timestamp);
 
         _consumeNonceAndDeadline(sm.subAgent, nonce, deadline);
 
@@ -792,7 +798,8 @@ contract AttenuaVault is ReentrancyGuard {
             address(this),
             vendor,
             invoiceId,
-            amount
+            amount,
+            vendorValidUntil
         );
         PqcVerifier.verify(vendor, vendorPqcSig, vendorDigest);
 
@@ -805,7 +812,8 @@ contract AttenuaVault is ReentrancyGuard {
             researchMandateId,
             vendor,
             invoiceId,
-            amount
+            amount,
+            researchDeadline
         );
         PqcVerifier.verify(rm.subAgent, researchPqcSig, researchDigest);
 
@@ -862,7 +870,7 @@ contract AttenuaVault is ReentrancyGuard {
             unchecked {
                 hops += 1;
             }
-            if (hops > 16) break;
+            if (hops > MAX_ANCESTOR_HOPS) break;
         }
     }
 

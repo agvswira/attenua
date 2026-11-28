@@ -176,13 +176,13 @@ contract AttenuaHandler is Test {
         );
         bytes memory vSig = _sign(
             vendor,
-            abi.encodePacked("attenua-v1|VENDOR_INVOICE|", block.chainid, address(vault), vendor, invId, amt)
+            abi.encodePacked("attenua-v1|VENDOR_INVOICE|", block.chainid, address(vault), vendor, invId, amt, dl)
         );
         bytes memory rSig = _sign(
             rAgent,
-            abi.encodePacked("attenua-v1|RESEARCH_CLEAR|", block.chainid, address(vault), ep, rId, vendor, invId, amt)
+            abi.encodePacked("attenua-v1|RESEARCH_CLEAR|", block.chainid, address(vault), ep, rId, vendor, invId, amt, dl)
         );
-        try vault.executePayInvoice(pId, rId, vendor, invId, amt, pNonce, dl, pSig, vSig, rSig) {
+        try vault.executePayInvoice(pId, rId, vendor, invId, amt, pNonce, dl, dl, dl, pSig, vSig, rSig) {
             totalPaidToVendor += amt;
         } catch {}
     }
@@ -332,6 +332,7 @@ contract AttenuaVaultInvariantTest is StdInvariant, Test {
     /// @notice I4: Every created sub-mandate satisfies strict subset & budget conservation relative to its parent
     function invariant_strictLatticeAttenuation() public view {
         (, uint256 rBudget, , , uint16 rMin, uint16 rMax, uint8 rMask, uint8 maxDepth, uint64 rExp, , ) = vault.rootMandate();
+        assertLe(maxDepth, vault.MAX_ANCESTOR_HOPS());
         uint256 ep = vault.rootEpoch();
         uint256 count = handler.mandateCount();
         for (uint256 i = 0; i < count; i++) {
