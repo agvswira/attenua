@@ -1,50 +1,50 @@
 {
   "network": "qorechain-diana",
   "evmChainId": 9800,
-  "deployedAt": "2026-11-22T02:42:58.726Z",
+  "deployedAt": "2026-11-28T19:05:45.251Z",
   "compiler": "0.8.28+commit.7893614a.Emscripten.clang",
   "contracts": {
     "fusd": "0x97143B771D34ddb9130b807b135Ae675A5a963CA",
     "holderGuard": {
-      "address": "0xf70c001e482a1112ec76684ddec4ffe3bff4c652",
-      "deployTx": "0xf3fd62807f3e2e246e1e54e186a8bebff4a6fadfcf23c2b44b94c8bc674f866f",
-      "exemptTx": "0x03f6ce3c349ab00237380aa386366a6bdb60c9bcbe3ed104ed829af4d446d2af",
-      "renounceOwnershipTx": "0x5cbd64b6195b6e3d1eae4392991a053cd0a4f0aed270b9e637e1645757fb5d8b",
+      "address": "0x792b39c13a19460d5df07c67a74fe7616101a4fb",
+      "deployTx": "0x4a8eac829929acd916edb9fd586339cebb245184e95d921452a415e56a3a9dac",
+      "exemptTx": "0x20b8d0dd2f002fd96607965a705674357d31abb91b513e133330f0fb9af00733",
+      "renounceOwnershipTx": "0x7a8225d39113e44dcb39a13bf3874051a4bb99f430f2ffd5e8ecdaffd8dc4382",
       "ownerAfterRenounce": "0x0000000000000000000000000000000000000000",
       "attenuaVaultExempt": true
     },
     "liquidityVault": {
-      "address": "0xb5cf1d53872255bed60ebb731e9043b7c9ff2c8b",
-      "deployTx": "0x2c8847febebe7312f0509ceda96446573c5aabf94033cab2756a416810333c62"
+      "address": "0xe97856857397f8bf55bb5323cd0c979d9a7bb33c",
+      "deployTx": "0xe6954420fa25b32aaa2002631a54908184d64f54b9ceb83915438353614ec470"
     },
     "reserveVault": {
-      "address": "0x5b914270db69cee65762c75edf1e1ce2856cc72b",
-      "deployTx": "0x4386b7c3123f8b4a972db23adb05f3c3d9fc4e5d09cec565546c2ca8c4e4bed0"
+      "address": "0xaba875b56360ab3050a3896405f1573bb5c561d7",
+      "deployTx": "0x1a553925c59602ead5e74d6b76e4469a2f05d81885cfa17fbebfc3d1b8965272"
     },
     "attenuaVault": {
-      "address": "0xf585fc6e1e43446f353830e0d11ff44ce747af58",
-      "deployTx": "0xb115277bd91cc5b43d1a84a22c87d4dc8cc324c28d698d66aea3e416e52ec349",
-      "bytecodeHash": "0x394fa5fb072f7f82bf417d697eac9b00365a7e12afa8f75bb4e97daf08388811"
+      "address": "0x19b54f37b06e0c08aa733542b9d145d0d0446113",
+      "deployTx": "0xe4aa53d5995cded35039d56db964750148ca67ea6421441284145d3bfd7ea997",
+      "bytecodeHash": "0xb7fb8e61479f0d5a92e8c74a6a44700d1af41665d16401712c4f3c43a266e244"
     }
   },
   "windows": {
-    "deployOpenTx": "B1EF36197E36DB5CB5A95A2E0099B42BDBD50EC6A7BE8CA9CA09B1B24ADBC8F5",
-    "deployCloseTx": "2C2D2FC3D7193786401AB62BB52622A82B32A88717475C0F5B567A9EB5282DC4",
-    "guardAdminOpenTx": "513E83260F9E016513B6853B3657BDC61E6731EB5317F09D6CA0F6C48E1804EB",
-    "guardAdminCloseTx": "66A5E3568E54EFBA766716FC6B37F35C87070A0566413305C58EF966F8487A8E"
+    "deployOpenTx": "D4441A4C16ACB3084D9D4DC4A0C532A9F9EFA1EAEBAC104E18543D2CD6DB7EBE",
+    "deployCloseTx": "490C43A0BB2D3AAC9F35158137E3E5CDAC60B81268E9039273A8CC4429923220",
+    "guardAdminOpenTx": "5DB134F446EEE1A940E88D47C096BA026F5DB3250E348F00FAC7DD16E05C49E4",
+    "guardAdminCloseTx": "E832BC9CA9BF9322E446DE2AF7AF737938098384E782AE4D4F969CBADA249C32"
   },
   "abstractAccounts": {
     "ownerTreasuryAA1": {
       "cosmos": "qor1k4xryjqufhdh44hgsqdpj5llr7y3dwyfenxfqg",
       "evm": "0xb54C32481C4DdB7aD6E8801A1953Ff1f8916B889",
       "orchestratorPubkeyHex": "0xa1b017d5a8e4bc892810a71da23a0f31bc4320c7b6e8064f551695b96b690b45",
-      "linkTx": "465ED354B03539371DA05FC90EF92E692FA95B16EBE0DA23367860377896E137"
+      "linkTx": "13E3FF9220F86D6CDB694FCC4330399FA849C608C267010D83A71BC9248F7EF4"
     },
     "monitorAA2": {
       "cosmos": "qor10vv75f5qwca5hra7ye0vxwemz2t6q6lv28m7d4",
       "evm": "0x7b19eA2680763B4b8fBe265eC33b3b1297A06beC",
       "monitorPubkeyHex": "0x114f02a5e5710ff9dba3109e5df4ac0d41f6040953cd81c144e0885c0a335fee",
-      "linkTx": "527ED51D6C858FE5B092909372D5659137750B92C269FE995136C6BE312A46AF"
+      "linkTx": "10C42872BB15B585C5F059E20CC8983BFA414758C7F2F0D1923183CC4B8943B3"
     }
   },
   "actors": {
@@ -83,7 +83,7 @@
     "registerSubMandate": "0x2d5995c1",
     "reclaimSubMandate": "0xa4f203f7",
     "executeAllocate": "0x24cd98b9",
-    "executePayInvoice": "0x8d513bef",
+    "executePayInvoice": "0xce722dd3",
     "revokeRootEpoch": "0x4050ce73",
     "unfreeze": "0x9dc83361",
     "freeze": "0xbd2d305f",

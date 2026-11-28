@@ -1,12 +1,12 @@
 {
   "network": "qorechain-diana",
   "evmChainId": 9800,
-  "runAt": "2026-11-22T02:49:47.014Z",
-  "vault": "0xf585fc6e1e43446f353830e0d11ff44ce747af58",
+  "runAt": "2026-11-28T19:10:10.368Z",
+  "vault": "0x19b54f37b06e0c08aa733542b9d145d0d0446113",
   "mandates": {
-    "allocator": "0xa82af014a2404c5cf34df950d496e669134c9db137cfd8c3e9d43e58a8788216",
-    "payables": "0x058ecd0bf1576c183b73cba2e30f740d264550a6eee931c2587f711dd13a192d",
-    "research": "0xd9b125c30d10bc7011a0ce1008847a7b679ac79a2ea269e972a5d527134d803f"
+    "allocator": "0xe5dbf24780d517bc94bda83f3405b1c225298896ad125f2f93a4ebbf56c468de",
+    "payables": "0xe1d0c4a67488204cf67743b1bae4da228ab9b41b73ef009b005eaa5b4ff101e5",
+    "research": "0xed420a6c4c3a063fbc3ec5bf33483681790b65238afb561f866bb316750822ca"
   },
   "happyPath": [
     {
@@ -15,8 +15,8 @@
       "actor": "Owner",
       "layer": "AttenuaVault + pqcVerify",
       "passed": true,
-      "txHash": "CEB620D74531AB327BD7B52A1218694D12663DA20E84EAAF3D6828C514153D0E",
-      "evmGasUsed": "303960",
+      "txHash": "2F47735750EB1DB9FC91D1DE087E61C63839A122B7B92346723FF7E9B86172F0",
+      "evmGasUsed": "304080",
       "summary": "rootBudget=20 fUSD, liquidityBand=[40%, 70%], maxDepth=2"
     },
     {
@@ -25,8 +25,8 @@
       "actor": "Owner",
       "layer": "AttenuaVault + pqcKeyStatus",
       "passed": true,
-      "txHash": "6DA51E8BAAE98DC29785F80C84AAF2E2CF0E8BFB1784923E218040FF9399B7BE",
-      "evmGasUsed": "232964",
+      "txHash": "6F5C5614B534D45123FBC7DFCDC721FBF692C591582AF77B3CB8E4F828A0F4D7",
+      "evmGasUsed": "233108",
       "summary": "Vendor 0x2cF96cFCd6cba46D698f3fcd1B726027E04C0808 registered (possessionProven verified)"
     },
     {
@@ -35,7 +35,7 @@
       "actor": "Orchestrator (AA #1)",
       "layer": "x/abstractaccount denom_limits",
       "passed": true,
-      "txHash": "520ABD9755C753D8A705E7796AB938B6C64488B00A91A25DF0898524C13EBDAE",
+      "txHash": "E09FA6D6ABF01B605A0C64DC61A85BD385FFE3028FED9DA95AA0B952CA4E1A5D",
       "evmGasUsed": "51565",
       "summary": "Transferred 8 fUSD directly from Owner Treasury -> AttenuaVault (cap 10/tx, 25/day)"
     },
@@ -45,9 +45,9 @@
       "actor": "Orchestrator (ML-DSA-87)",
       "layer": "AttenuaVault Attenuation Lattice",
       "passed": true,
-      "txHash": "FBF2C5187FAC04C347A94E2FE6D055B64EE293FA34A3C3FB8AF66BD05EBB3A65",
-      "evmGasUsed": "364327",
-      "summary": "mandateId=0xa82af014a240..."
+      "txHash": "73079DC7EA849171CD5AEA3BDCC9E5E817E014FD529EA3ADFDBAE0369F0FB8D7",
+      "evmGasUsed": "364147",
+      "summary": "mandateId=0xe5dbf24780d5..."
     },
     {
       "id": "H4b",
@@ -55,9 +55,9 @@
       "actor": "Orchestrator (ML-DSA-87)",
       "layer": "AttenuaVault Attenuation Lattice",
       "passed": true,
-      "txHash": "DC5C0828A35C7E63665D809C947C7071F8448151EDE432E01D3994A0BCDCEC6E",
-      "evmGasUsed": "330031",
-      "summary": "mandateId=0x058ecd0bf157..."
+      "txHash": "A590A15CA01CFD0BE37C50A1691D1849C43320E1A5C248E5707378D93EE45E4B",
+      "evmGasUsed": "330223",
+      "summary": "mandateId=0xe1d0c4a67488..."
     },
     {
       "id": "H4c",
@@ -65,9 +65,9 @@
       "actor": "Orchestrator (ML-DSA-87)",
       "layer": "AttenuaVault Attenuation Lattice",
       "passed": true,
-      "txHash": "C92C88C1A14237489E32DC0D5D094AEE9C2E870E2D8E7E804DE46DDEC0EA31DB",
-      "evmGasUsed": "307319",
-      "summary": "mandateId=0xd9b125c30d10..."
+      "txHash": "8BF32E1F5428D61481C253D8EA3F008EFEA3A05AA16523AAB85184F7B43FC92C",
+      "evmGasUsed": "307307",
+      "summary": "mandateId=0xed420a6c4c3a..."
     },
     {
       "id": "H5",
@@ -75,8 +75,8 @@
       "actor": "Allocator (ML-DSA-87)",
       "layer": "AttenuaVault + @qorechain/asset-kit",
       "passed": true,
-      "txHash": "A59F18FFFFB4008AF0DE47021D5CA164A6E9B39461DDB0369122CEC0DA6E38EC",
-      "evmGasUsed": "506921",
+      "txHash": "7F6ED03B85256FE6342C4F13E526EE6DB5E7000747C3453F150EB45864075633",
+      "evmGasUsed": "506969",
       "summary": "postLiquidityBps=5000 (50.00%, strictly inside [45%, 65%])"
     },
     {
@@ -85,9 +85,9 @@
       "actor": "Payables + Vendor + Research",
       "layer": "AttenuaVault + 3x pqcVerify",
       "passed": true,
-      "txHash": "031709238F926FFDE71C209C6DAD53C8FEFD99E17A63E4920B1BDAE8D7981BBF",
-      "evmGasUsed": "662807",
-      "summary": "Paid 1.5 fUSD to registered vendor; 3x ML-DSA-87 verified on-chain (gas=662807)"
+      "txHash": "48498912B9BBE894EBE891502B3612F6297F3D2D4FDBA0D3F431FA313B27600F",
+      "evmGasUsed": "663585",
+      "summary": "Paid 1.5 fUSD to registered vendor; 3x ML-DSA-87 verified on-chain (gas=663585)"
     },
     {
       "id": "H7",
@@ -95,8 +95,8 @@
       "actor": "Orchestrator (ML-DSA-87)",
       "layer": "AttenuaVault Conservation Accounting",
       "passed": true,
-      "txHash": "8276BC099836846B0D9E34E75E17CF1661305DB7AE35600D39133208F57D755F",
-      "evmGasUsed": "249244",
+      "txHash": "85D8CE41C5C2430AFF5CEAE1AA718A74880A97548180950BF529575EED413116",
+      "evmGasUsed": "249210",
       "summary": "Reclaimed 0.5 fUSD unspent allocation back to root pool"
     }
   ],
@@ -107,8 +107,8 @@
       "actor": "Compromised Orchestrator",
       "layer": "AttenuaVault Lattice (AttenuationBandWidened)",
       "passed": true,
-      "txHash": "701F16A19AF3219E728A770F123644CAF529C800BAF2E8F9E731F59F1B7DA8C9",
-      "evmGasUsed": "121067",
+      "txHash": "7EE514DA51A8A6E491B6A429A52AA55BE5C0ACF1454851F15675781A03E8139D",
+      "evmGasUsed": "121175",
       "summary": "Refused on-chain: child band cannot widen parent IPS band",
       "verbatimReason": "execution reverted: evm transaction execution failed"
     },
@@ -118,8 +118,8 @@
       "actor": "Compromised Orchestrator",
       "layer": "AttenuaVault Lattice (AttenuationBudgetExceeded)",
       "passed": true,
-      "txHash": "A74638DED4F403E35F54F99330CD5600C94120B455F3B047EC364A88B726E298",
-      "evmGasUsed": "120869",
+      "txHash": "CE5153458AFDF70DC38002A37A0514081B26A3D42B63779F1281EAC3F5DABF70",
+      "evmGasUsed": "121025",
       "summary": "Refused on-chain: sum(child budgets) cannot exceed rootBudget",
       "verbatimReason": "execution reverted: evm transaction execution failed"
     },
@@ -129,8 +129,8 @@
       "actor": "Hijacked Payables",
       "layer": "AttenuaVault (ActionNotPermitted / Mandate Binding)",
       "passed": true,
-      "txHash": "E929528EBAFF6B44426C67DB3C00C862396700E87852B41D066C648EEEB6E236",
-      "evmGasUsed": "262782",
+      "txHash": "A17B8EAA995E654F64CFC2B590A40A6D0897D7B5719270BF8A5D1C26666C19D9",
+      "evmGasUsed": "263367",
       "summary": "Refused on-chain: sibling mandate action mask & signer binding rejected",
       "verbatimReason": "execution reverted: evm transaction execution failed"
     },
@@ -140,8 +140,8 @@
       "actor": "Hijacked Research (budget=0)",
       "layer": "AttenuaVault (ActionNotPermitted / ZeroBudgetCapability)",
       "passed": true,
-      "txHash": "0D59E27FF1FF62E0F5E978C5D625E16CE1769BFC5440D36D884A7A7F3297EDDC",
-      "evmGasUsed": "111018",
+      "txHash": "1E11DA1BD52DE8894B26C7B350D6542211E4A63DFA5019C8E27B3AAFB8858E12",
+      "evmGasUsed": "111102",
       "summary": "Refused on-chain: zero-budget read-only analyst cannot move funds",
       "verbatimReason": "execution reverted: evm transaction execution failed"
     },
@@ -151,8 +151,8 @@
       "actor": "Prompt-Injected Payables",
       "layer": "AttenuaVault (VendorNotRegistered)",
       "passed": true,
-      "txHash": "3254BAE4A2240D8E4A9B77269A2AFBDA6D379540ADEF9CB9DCBE5F82B14CA8DA",
-      "evmGasUsed": "256038",
+      "txHash": "6B6A7800A3B0C717AA6C4DC62A8B474AD35425191BC78C3FDB324D69AD5DDC72",
+      "evmGasUsed": "256923",
       "summary": "Refused on-chain: unlisted recipient blocked before any transfer",
       "verbatimReason": "execution reverted: evm transaction execution failed"
     },
@@ -162,8 +162,8 @@
       "actor": "Replay Attacker",
       "layer": "AttenuaVault (InvoiceAlreadyPaid)",
       "passed": true,
-      "txHash": "5537D5169EDCF9E3E58E3833C77AABC8AFBC77B15F71B7B6869DDE08547A4856",
-      "evmGasUsed": "271387",
+      "txHash": "19836D561E73064FB044E418ADD7805C370E9C0383C9761585FFA13FEEB1CCD6",
+      "evmGasUsed": "272092",
       "summary": "Refused on-chain: invoiceKey permanently marked paid",
       "verbatimReason": "execution reverted: evm transaction execution failed"
     },
@@ -173,8 +173,8 @@
       "actor": "Hijacked Payables",
       "layer": "AttenuaVault (SelfDelegationNotAllowed / SeparationOfDuties)",
       "passed": true,
-      "txHash": "44F6DBDE4629417BE76466343CB0DB44D38D1745DE4CC6A67976C2527FE58685",
-      "evmGasUsed": "131159",
+      "txHash": "31B2CCD68438AFBF1CF8805CC4E51D04F7E17A1BE22FFE6AAEBEDAF4BBBE13F3",
+      "evmGasUsed": "130991",
       "summary": "Refused on-chain: Payables cannot self-delegate a zero-budget Research mandate",
       "verbatimReason": "execution reverted: evm transaction execution failed"
     },
@@ -184,7 +184,7 @@
       "actor": "Compromised Orchestrator (AA #1)",
       "layer": "x/abstractaccount (spending limit exceeded)",
       "passed": true,
-      "txHash": "BD069AFF874B9E72A0343816C8FE7DAD60495E2E857EF7D2F85F743E3428B7D6",
+      "txHash": "6443B5192218BC149FC2C44C5E2AFCDBB9B9DCBF54B4DA15E756039C211FC77B",
       "evmGasUsed": "34477",
       "summary": "Refused by chain protocol (outer code=0 + abstractaccount_execution_failed)",
       "verbatimReason": "per-tx limit 10000000erc20/0x97143B771D34ddb9130b807b135Ae675A5a963CA exceeded (attempted 11000000): spending limit exceeded"
@@ -195,10 +195,10 @@
       "actor": "Classical Monitor (AA #2) vs Owner (ML-DSA-87)",
       "layer": "AA #2 Protocol Lock + AttenuaVault (VaultIsFrozen)",
       "passed": true,
-      "txHash": "8111C7BD888A062F6DB2746BB433C1A2E8A5C58BE0DC11009772148099825B88",
-      "evmGasUsed": "54037",
+      "txHash": "1675AB472A8144A54C6B0F37DF5FF60F82ABABC39C9E1B2E3900DF28AFA89775",
+      "evmGasUsed": "54015",
       "summary": "freeze=true, spendBlocked=true, monitorUnfreezeRefused=true, ownerPqcUnfreeze=true",
-      "verbatimReason": "a linked key with a spending rule may call 0xf585fC6E1E43446F353830e0D11FF44CE747AF58 with data only if the rule lists the call in allowed_evm_calls (or lists the token as \"erc20/0xf585fC6E1E43446F353830e0D11FF44CE747AF58\" for a token transfer or approval): authenticator not permitted for this action"
+      "verbatimReason": "a linked key with a spending rule may call 0x19b54F37B06E0C08AA733542B9d145D0D0446113 with data only if the rule lists the call in allowed_evm_calls (or lists the token as \"erc20/0x19b54F37B06E0C08AA733542B9d145D0D0446113\" for a token transfer or approval): authenticator not permitted for this action"
     },
     {
       "id": "A9",
@@ -206,9 +206,9 @@
       "actor": "Owner (ML-DSA-87) vs Active Sub-Agent",
       "layer": "AttenuaVault Epoch Counter + x/abstractaccount",
       "passed": true,
-      "txHash": "5F40C61F99A682F9B41DEFD6FD173EC5B67ED080DF5D040FE56961431E127700",
-      "evmGasUsed": "212347",
-      "summary": "rootEpoch 1 -> 2 in O(1) gas (212347); Allocator immediately refused (2B2146B7FF2C24BDBC27709CB1E0A8420FCD5DFB9842EF900042ADB70551573F)",
+      "txHash": "5AB8FD7C831E41C1289EAD51D340A2CB73AC6AAC5FA92BC87980C3168DBD6723",
+      "evmGasUsed": "212191",
+      "summary": "rootEpoch 1 -> 2 in O(1) gas (212191); Allocator immediately refused (68B63D71E06AC0BFBAA8CC0E8E58F762585C6206CA18E5CF19E88DBEC55165FD)",
       "verbatimReason": "execution reverted: evm transaction execution failed"
     }
   ]

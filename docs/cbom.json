@@ -2,10 +2,10 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
-  "serialNumber": "urn:uuid:1ad56cf4-ad0b-53d8-9fba-3060171f6ad1",
+  "serialNumber": "urn:uuid:050ba473-bd41-5969-958f-8dc1b633445e",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-11-28T18:21:25Z",
+    "timestamp": "2026-11-28T19:16:57Z",
     "tools": {
       "components": [
         {
@@ -184,7 +184,7 @@
       },
       {
         "name": "qorescan:chain:protocol-features",
-        "value": "353 enabled at height 10924310 (33 PQC-related listed)"
+        "value": "353 enabled at height 10926626 (33 PQC-related listed)"
       },
       {
         "name": "qorescan:chain:pqc:hybrid-signature-mode",
@@ -255,7 +255,7 @@
           },
           {
             "location": "AttenuaVault.sol",
-            "line": 445,
+            "line": 447,
             "symbol": "ECDSA.recover",
             "additionalContext": "ECDSA library recovery"
           },
@@ -339,7 +339,7 @@
           {
             "location": "https://api-testnet.qore.host/cosmos/base/tendermint/v1beta1/validatorsets/latest?pagination.limit=1000",
             "symbol": "validators[].pub_key",
-            "additionalContext": "4 active validators with /cosmos.crypto.ed25519.PubKey consensus keys at height 10924312"
+            "additionalContext": "4 active validators with /cosmos.crypto.ed25519.PubKey consensus keys at height 10926627"
           }
         ]
       },
@@ -394,13 +394,13 @@
           },
           {
             "location": "AttenuaVault.sol",
-            "line": 442,
+            "line": 444,
             "symbol": "keccak256",
             "additionalContext": "Keccak-256 hash"
           },
           {
             "location": "AttenuaVault.sol",
-            "line": 768,
+            "line": 772,
             "symbol": "keccak256",
             "additionalContext": "Keccak-256 hash"
           },
@@ -885,7 +885,7 @@
           {
             "location": "https://api-testnet.qore.host/cosmos/base/tendermint/v1beta1/validatorsets/latest?pagination.limit=1000",
             "symbol": "validators[].pub_key",
-            "additionalContext": "4 active validators with /cosmos.crypto.ed25519.PubKey consensus keys at height 10924312"
+            "additionalContext": "4 active validators with /cosmos.crypto.ed25519.PubKey consensus keys at height 10926627"
           }
         ]
       },

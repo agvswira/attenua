@@ -1,8 +1,8 @@
 {
   "network": "qorechain-diana",
   "evmChainId": 9800,
-  "vault": "0xf585fc6e1e43446f353830e0d11ff44ce747af58",
-  "installedAt": "2026-11-26T17:13:20.144Z",
+  "vault": "0x19b54f37b06e0c08aa733542b9d145d0d0446113",
+  "installedAt": "2026-11-28T19:11:14.088Z",
   "epoch": 2,
   "rootMandate": {
     "orchestrator": "0x4D33b85Da188577d0e5A23E161Cf00c32ed5ccB3",
@@ -11,12 +11,12 @@
     "maxLiquidityBps": 7000,
     "actionMask": 3,
     "maxDepth": 2,
-    "expiryUnix": "1799601148",
-    "expiryIso": "2027-01-10T17:12:28.000Z"
+    "expiryUnix": "1799781024",
+    "expiryIso": "2027-01-12T19:10:24.000Z"
   },
   "mandates": {
     "allocator": {
-      "id": "0xdf4583c29a1f444df1171e9dc72ec456ba3ed2550da40c5b16999a7f26a1f407",
+      "id": "0xd7da319cf40a41ab6f3c3552d4503c6a5b67a022d3bfed4d047bc50c0bf8aa51",
       "parentId": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "issuer": "0x4D33b85Da188577d0e5A23E161Cf00c32ed5ccB3",
       "subAgent": "0x57Db92cbDd06b5dD29016470b5D2eaD2a519c072",
@@ -26,10 +26,10 @@
       "maxLiquidityBps": 6500,
       "actionMask": 1,
       "depth": 1,
-      "expiryUnix": "1799169148"
+      "expiryUnix": "1799349024"
     },
     "payables": {
-      "id": "0x18b21825f0ef919efe976ab16f3c1b978f758151a1a88dd823c805a0d5a8082a",
+      "id": "0x2e0d4df501262acc4fbb1529175e183462707f7da0f1c5193f8b0deccf30270a",
       "parentId": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "issuer": "0x4D33b85Da188577d0e5A23E161Cf00c32ed5ccB3",
       "subAgent": "0x2003B2003ff46072178e40E6b504FCb6014a97CE",
@@ -39,10 +39,10 @@
       "maxLiquidityBps": 7000,
       "actionMask": 2,
       "depth": 1,
-      "expiryUnix": "1799169148"
+      "expiryUnix": "1799349024"
     },
     "research": {
-      "id": "0x095a0c18e6f1537b6e6dd2b22b8d267169e413bad52443eb509cb168b29db81d",
+      "id": "0x29beefa196816f002aaaa07b8c4b2d96cd78da468d55d8144651d6de50e07176",
       "parentId": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "issuer": "0x4D33b85Da188577d0e5A23E161Cf00c32ed5ccB3",
       "subAgent": "0x69F29191b758aA1413407d8548Cd8b9c77c63B58",
@@ -52,11 +52,11 @@
       "maxLiquidityBps": 7000,
       "actionMask": 0,
       "depth": 1,
-      "expiryUnix": "1799169148"
+      "expiryUnix": "1799349024"
     },
     "allocatorLeaf": {
-      "id": "0xb015d132e593efa6cee26669d7591fb2b6ae50e94b0023fd7807fdd2188d3953",
-      "parentId": "0xdf4583c29a1f444df1171e9dc72ec456ba3ed2550da40c5b16999a7f26a1f407",
+      "id": "0xaa898413fc0cb7934e06b072d1e191bd7b5f7bd0bc702cee53d3b238c99c6921",
+      "parentId": "0xd7da319cf40a41ab6f3c3552d4503c6a5b67a022d3bfed4d047bc50c0bf8aa51",
       "issuer": "0x57Db92cbDd06b5dD29016470b5D2eaD2a519c072",
       "subAgent": "0x2003B2003ff46072178e40E6b504FCb6014a97CE",
       "budgetMicro": "2000000",
@@ -65,15 +65,15 @@
       "maxLiquidityBps": 6200,
       "actionMask": 1,
       "depth": 2,
-      "expiryUnix": "1798737148"
+      "expiryUnix": "1798917024"
     }
   },
   "txs": {
-    "root": "D957F7C228865643011AB172A8B6E9AB3AABDE2226369FCCB0DE188EE1D12E1C",
-    "allocator": "199BD2F42511DE3FD9D3EF018028E825B32EF0F36F72675512AB0459865C4580",
-    "payables": "DC73C8CA7EA2A75D5952D5EAB427F9028782866771DB3A4E35F28DC65CE0164E",
-    "research": "EC3A5F2C9B76238610C4A434B6BAFA9649E859A171C0FCD922C8E16D58F1803F",
-    "allocatorLeaf": "A00CE29290BB3B7F4125D0F58904576CF5F8B4AFB86B95FAF302EDBE1704D68F"
+    "root": "A41D4F2E876C95C13B39E30486616D2687BD6C5D33D2C08F8F644BD879EE200E",
+    "allocator": "D64A151716A56ED4008D48FFDA6D7D00D099F9458E5DFD948F3F20DFAA17D052",
+    "payables": "6E11B6E7DFC67E14F61EE85F2D1C82090A3679D426A16F6F5F9E64AB6F5671DE",
+    "research": "2AD2C3E922C125DED87227BF5B2A328508FFBC66FB8EA84AFCFC3B814A4D6D90",
+    "allocatorLeaf": "6D54BFB8F989A6A3DB87739141E739FA72CBF07265D958DA70ACCE7812390000"
   },
-  "paidInvoiceId": "0x4dc0e87a212b9c6eb532b4d70a082be1695c28590265615182672de8a5e7aba5"
+  "paidInvoiceId": "0xa7b8114ec4ee67ce04e90771e0021592e3293786966d13f34b69d8f411e3b7cb"
 }

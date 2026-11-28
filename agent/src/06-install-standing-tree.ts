@@ -443,7 +443,8 @@ async function main() {
           for (const m of j.tx?.body?.messages ?? []) {
             if (m.data) {
               const hex = Buffer.from(m.data, "base64").toString("hex");
-              if (hex.startsWith("8d513bef")) {
+              const paySel = String(dep.selectors?.executePayInvoice ?? "0xce722dd3").replace(/^0x/, "").toLowerCase();
+              if (hex.startsWith(paySel) || hex.startsWith("8d513bef")) {
                 paidInvoiceId = `0x${hex.slice(8 + 64 * 3, 8 + 64 * 4)}`;
               }
             }
