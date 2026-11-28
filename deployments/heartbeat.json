@@ -4,9 +4,26 @@
   "vault": "0x19b54f37b06e0c08aa733542b9d145d0d0446113",
   "epoch": 2,
   "securityModel": "Zero Owner Root key in runner; sub-agent Payables/Research/Vendor + AA#1 transport only",
-  "totalRuns": 1,
-  "lastRunUtc": "2026-11-28T19:11:41.000Z",
+  "totalRuns": 2,
+  "lastRunUtc": "2026-11-28T19:21:13.000Z",
   "runs": [
+    {
+      "runId": "HB-1795893673",
+      "timestampUtc": "2026-11-28T19:21:13.000Z",
+      "txHash": "343C0F9D7534988F72D31480BBB6A90524A4996C87F46B6473FB9575A3B8B32D",
+      "blockHeight": 10926807,
+      "evmGasUsed": "629685",
+      "amountMicro": "10000",
+      "invoiceId": "0x01151cc2adbd878594465004ea259da58a8ef433fdb900a9f35cd2ee211dadef",
+      "invoiceKey": "0xfa2ae4f04662e7f61b02e3f51f161f5aaa4dae65fdd54b390a0352be3fe0f9e9",
+      "vendor": "0x2cF96cFCd6cba46D698f3fcd1B726027E04C0808",
+      "screeningMode": "mcp_deterministic",
+      "qoreSealEnvelopeBytes": 9936,
+      "clearanceShake256": "0x0646df03160083dcdd1755f0c349ce3bc56fff8e97f0925840698f7d58275384",
+      "vaultIdleAfterMicro": "480000",
+      "payablesSpentAfterMicro": "20000",
+      "payablesBudgetMicro": "2000000"
+    },
     {
       "runId": "HB-1795893101",
       "timestampUtc": "2026-11-28T19:11:41.000Z",
