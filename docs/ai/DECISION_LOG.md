@@ -23,3 +23,8 @@ This log records the candidate architectures evaluated before writing production
   - `GET https://api-testnet.qore.host/cosmos/evm/vm/v1/params` → active precompiles: `0x...0901`, `0x...0C01`, `0x...0a01` (`pqcVerify`), `0x...0a02` (`pqcKeyStatus`). Inactive: `0x...0b01`, `0x...0b02`.
   - `GET https://api-testnet.qore.host/qorechain/abstractaccount/v1/config` → `enabled: true`, `max_session_keys: 10`, `max_spending_rules: 5`, `default_session_ttl: "86400"`.
 - **Execution Order Rule**: Run **Step 0 Testnet Spike (S1–S7)** in `spike/` BEFORE freezing the final specification document.
+
+## Round 3 — `AttenuaVault` v1.2 Audit-Hardening Upgrade (2026-11-29)
+
+- **Trigger**: Post-submission blind review flagged two remaining contract bounds (`M-02`: unbound vendor quote / research clearance expiry timestamps; and `maxDepth <= 255` exceeding `_requireOpenAncestors`'s 16-hop loop bound).
+- **Decision**: Rather than leaving these in `HONEST_LIMITS.md`, we upgraded `AttenuaVault.sol` to **v1.2**, added explicit `uint64 vendorValidUntil` and `uint64 researchDeadline` (checked before PQC verify and hashed into `vendorDigest` & `researchDigest`), enforced `maxDepth <= MAX_ANCESTOR_HOPS (16)` in `setRootMandate`, added 4 regression tests (`test_49..test_52`, `54/54` Foundry), deployed cleanly to `qorechain-diana` (`0x19b54f37b06e0c08aa733542b9d145d0d0446113`), replayed the preserved 26 Nov LLM benchmark responses (`20/20` refused on v1.2), and re-verified **4/4 Hallmark `full match`**.

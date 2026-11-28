@@ -391,7 +391,7 @@ export function AttackLab({ live }: AttackLabProps) {
 
   // Auto-run default Depth-2 Transitivity attack once on load so judges see live chain truth immediately
   useEffect(() => {
-    void runLiveAttack({ label: "Auto-probed Depth-2 Transitivity on live AttenuaVault v1.1" });
+    void runLiveAttack({ label: "Auto-probed Depth-2 Transitivity on live AttenuaVault v1.2" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -520,7 +520,7 @@ export function AttackLab({ live }: AttackLabProps) {
               rel="noreferrer"
               className="mono"
             >
-              AttenuaVault v1.1
+              AttenuaVault v1.2
             </a>{" "}
             contract on <code>qorechain-diana</code> refuse via live <code>eth_call</code>.
           </p>

@@ -15,14 +15,14 @@
       "algorithmId": 2,
       "algorithmName": "mlkem1024",
       "registeredHeight": "10924190",
-      "txHash": null
+      "txHash": "A84387CE0B0CE54E813A29E17174D506799A72523157A4C6172C2F5E79DCCCEF"
     },
     "payables": {
       "cosmos": "qor1yqpmyqpl73s8y9uwgrnt2p8ukcq5497wz9czxy",
       "algorithmId": 2,
       "algorithmName": "mlkem1024",
       "registeredHeight": "10924196",
-      "txHash": null
+      "txHash": "7CD72E4A20DDFF06253BCC1058C8A367C38D2BC05441274A888B0BC501F5D9EB"
     }
   },
   "recipientCards": {

@@ -30,7 +30,7 @@ import {
 
 const ZERO_ADDR = "0x0000000000000000000000000000000000000000" as const;
 const ZERO_ID = "0x0000000000000000000000000000000000000000000000000000000000000000" as const;
-const VAULT = "0xf585fc6e1e43446f353830e0d11ff44ce747af58" as const;
+const VAULT = "0x19b54f37b06e0c08aa733542b9d145d0d0446113" as const;
 const VENDOR = "0x2cf96cfcd6cba46d698f3fcd1b726027e04c0808" as const;
 const SUB_AGENT = "0x57db92cbdd06b5dd29016470b5d2ead2a519c072" as const;
 const MONITOR_PRIV =
@@ -716,7 +716,7 @@ describe("Live qorechain-diana On-Chain & Evidence Invariants (Keyless)", () => 
     "function isEligible(address) view returns (bool)",
   ]);
 
-  it("confirms live v1.1 contracts, HolderGuard renouncement, vendor allowlist, and A1-A10 evidence", async () => {
+  it("confirms live v1.2 contracts, HolderGuard renouncement, vendor allowlist, and A1-A10 evidence", async () => {
     const dep = JSON.parse(fs.readFileSync(DEPLOYMENT_FILE, "utf8"));
     const ev = JSON.parse(fs.readFileSync(EVIDENCE_FILE, "utf8"));
     const evm = createEvmPublicClient();

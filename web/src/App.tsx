@@ -623,30 +623,42 @@ export function App() {
               <span className="holding-amount">
                 block #{AUTHENTICATED_MESSAGE.kemRegistry.orchestratorPqc.registeredHeight}
               </span>
-              <a
-                className="holding-addr"
-                href={explorerTxUrl(AUTHENTICATED_MESSAGE.kemRegistry.orchestratorPqc.txHash)}
-                target="_blank"
-                rel="noreferrer"
-                title={`MsgRegisterKEMKey tx · ${AUTHENTICATED_MESSAGE.kemRegistry.orchestratorPqc.txHash}`}
-              >
-                {shortAddr(AUTHENTICATED_MESSAGE.kemRegistry.orchestratorPqc.txHash)} ↗
-              </a>
+              {AUTHENTICATED_MESSAGE.kemRegistry.orchestratorPqc.txHash ? (
+                <a
+                  className="holding-addr"
+                  href={explorerTxUrl(AUTHENTICATED_MESSAGE.kemRegistry.orchestratorPqc.txHash)}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={`MsgRegisterKEMKey tx · ${AUTHENTICATED_MESSAGE.kemRegistry.orchestratorPqc.txHash}`}
+                >
+                  {shortAddr(AUTHENTICATED_MESSAGE.kemRegistry.orchestratorPqc.txHash)} ↗
+                </a>
+              ) : (
+                <span className="holding-addr mono">
+                  {shortAddr(AUTHENTICATED_MESSAGE.kemRegistry.orchestratorPqc.cosmos)}
+                </span>
+              )}
             </div>
             <div className="holding-row">
               <span className="holding-name">Recipient 2 · Payables (ML-KEM-1024)</span>
               <span className="holding-amount">
                 block #{AUTHENTICATED_MESSAGE.kemRegistry.payables.registeredHeight}
               </span>
-              <a
-                className="holding-addr"
-                href={explorerTxUrl(AUTHENTICATED_MESSAGE.kemRegistry.payables.txHash)}
-                target="_blank"
-                rel="noreferrer"
-                title={`MsgRegisterKEMKey tx · ${AUTHENTICATED_MESSAGE.kemRegistry.payables.txHash}`}
-              >
-                {shortAddr(AUTHENTICATED_MESSAGE.kemRegistry.payables.txHash)} ↗
-              </a>
+              {AUTHENTICATED_MESSAGE.kemRegistry.payables.txHash ? (
+                <a
+                  className="holding-addr"
+                  href={explorerTxUrl(AUTHENTICATED_MESSAGE.kemRegistry.payables.txHash)}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={`MsgRegisterKEMKey tx · ${AUTHENTICATED_MESSAGE.kemRegistry.payables.txHash}`}
+                >
+                  {shortAddr(AUTHENTICATED_MESSAGE.kemRegistry.payables.txHash)} ↗
+                </a>
+              ) : (
+                <span className="holding-addr mono">
+                  {shortAddr(AUTHENTICATED_MESSAGE.kemRegistry.payables.cosmos)}
+                </span>
+              )}
             </div>
             <div className="holding-row">
               <span className="holding-name">QoreSeal Hybrid Envelope</span>

@@ -17,7 +17,7 @@ const TEST_MNEMONIC_PAYABLES = generateMnemonic(128);
 const TEST_MNEMONIC_ORCH = generateMnemonic(128);
 const TEST_MNEMONIC_ATTACKER = generateMnemonic(128);
 
-const VAULT = "0xf585fc6e1e43446f353830e0d11ff44ce747af58" as const;
+const VAULT = "0x19b54f37b06e0c08aa733542b9d145d0d0446113" as const;
 const INVOICE_ID = "0x4dc0e87a212b9c6eb532b4d70a082be1695c28590265615182672de8a5e7aba5" as const;
 
 test("QoreSign + QoreSeal hybrid ML-KEM-1024 roundtrip & tamper/expiry guards", async () => {

@@ -57,15 +57,15 @@ qor19nukelxkewjx66v08lx3kunqylsyczqgflfzhq
 
 ---
 
-## 3a. Hallmark Verified Source Records (`qorechain-diana`)
+## 3a. Hallmark Verified Source Records (`qorechain-diana`, `AttenuaVault` v1.2)
 
 All 4 deployed Solidity contracts are source-verified (`full match`, `solc 0.8.28+commit.7893614a`) and ML-DSA-87 claimed to `https://github.com/agvswira/attenua`:
 
-- `AttenuaVault` (PQ-guarded: `pqcVerify` + `pqcKeyStatus`): `https://hallmark-jade.vercel.app/c/0xf585fc6e1e43446f353830e0d11ff44ce747af58`
-- `QoreChainHybridHolderGuard` (PQ-guarded: `pqcKeyStatus`): `https://hallmark-jade.vercel.app/c/0xf70c001e482a1112ec76684ddec4ffe3bff4c652`
-- `LiquidityVault` (`QoreChainRwaVault`): `https://hallmark-jade.vercel.app/c/0xb5cf1d53872255bed60ebb731e9043b7c9ff2c8b`
-- `ReserveVault` (`QoreChainRwaVault`): `https://hallmark-jade.vercel.app/c/0x5b914270db69cee65762c75edf1e1ce2856cc72b`
-- Trustless CLI verification: `npx @agvswira/hallmark check 0xf585fc6e1e43446f353830e0d11ff44ce747af58`
+- `AttenuaVault` v1.2 (PQ-guarded: `pqcVerify` + `pqcKeyStatus`): `https://hallmark-jade.vercel.app/c/0x19b54f37b06e0c08aa733542b9d145d0d0446113`
+- `QoreChainHybridHolderGuard` (PQ-guarded: `pqcKeyStatus`): `https://hallmark-jade.vercel.app/c/0x792b39c13a19460d5df07c67a74fe7616101a4fb`
+- `LiquidityVault` (`QoreChainRwaVault`): `https://hallmark-jade.vercel.app/c/0xe97856857397f8bf55bb5323cd0c979d9a7bb33c`
+- `ReserveVault` (`QoreChainRwaVault`): `https://hallmark-jade.vercel.app/c/0xaba875b56360ab3050a3896405f1573bb5c561d7`
+- Trustless CLI verification: `npx @agvswira/hallmark check 0x19b54f37b06e0c08aa733542b9d145d0d0446113`
 
 ---
 
