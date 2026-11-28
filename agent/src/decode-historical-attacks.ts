@@ -2,8 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { decodeErrorResult, type Abi, type Address, type Hex } from "viem";
-import { EVIDENCE_FILE, REPO_ROOT, REST_URL, loadContractArtifact, sleep } from "./config.js";
-import { decodeAttenuaRevert, rawEthCall } from "./07-lab-cli.js";
+import { EVIDENCE_FILE, REPO_ROOT, REST_URL, sleep } from "./config.js";
+import { ATTENUA_ERROR_ABI, decodeAttenuaRevert, rawEthCall } from "./07-lab-cli.js";
 
 export const DECODED_ATTACKS_FILE = path.join(REPO_ROOT, "deployments", "decoded-attacks.json");
 
@@ -92,7 +92,7 @@ export async function decodeHistoricalAttack(
   entry: { id: string; txHash: string; summary?: string; verbatimReason?: string },
   vaultAbi?: Abi
 ): Promise<DecodedHistoricalAttack> {
-  const abi = vaultAbi ?? (loadContractArtifact("AttenuaVault").abi as Abi);
+  const abi = vaultAbi ?? (ATTENUA_ERROR_ABI as unknown as Abi);
   const targetTxHash = resolveTargetTxHash(entry);
   const body = await fetchCosmosTx(targetTxHash);
   const resp = body.tx_response;
@@ -161,7 +161,7 @@ async function main() {
   const ev = JSON.parse(fs.readFileSync(EVIDENCE_FILE, "utf8")) as {
     attacks: Array<{ id: string; txHash: string; summary?: string; verbatimReason?: string }>;
   };
-  const vaultAbi = loadContractArtifact("AttenuaVault").abi as Abi;
+  const vaultAbi = ATTENUA_ERROR_ABI as unknown as Abi;
 
   console.log("=== Attenua Historical Attack Revert Decoder (Archive eth_call @ height - 1) ===\n");
   const results: DecodedHistoricalAttack[] = [];
