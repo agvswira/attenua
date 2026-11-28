@@ -28,6 +28,7 @@ export interface ScreeningVerdict {
   reasons: string[];
   promptInjectionFlags: string[];
   chainChecks: ChainCheckResult;
+  clearanceDeadline?: bigint;
   clearanceSignaturePrefix?: string;
   clearanceSignatureBytes?: number;
   clearanceSignature?: `0x${string}`;
@@ -132,6 +133,7 @@ export async function screenInvoice(params: {
   vault: Address;
   researchMandateId: `0x${string}`;
   researchPqcSecret?: Uint8Array;
+  clearanceDeadline?: bigint;
   maxSingleInvoiceMicro?: bigint;
   reader: ChainReader;
 }): Promise<ScreeningVerdict> {
@@ -174,6 +176,7 @@ export async function screenInvoice(params: {
     };
   }
 
+  const clearanceDeadline = params.clearanceDeadline ?? BigInt(Math.floor(Date.now() / 1000) + 3600);
   let clearanceSignature: `0x${string}` | undefined;
   if (params.researchPqcSecret) {
     clearanceSignature = signResearchClearance({
@@ -184,6 +187,7 @@ export async function screenInvoice(params: {
       vendor: params.input.vendor,
       invoiceId: params.input.invoiceId,
       amount: params.input.amountMicro,
+      deadline: clearanceDeadline,
       researchPqcSecret: params.researchPqcSecret,
     });
   }
@@ -197,6 +201,7 @@ export async function screenInvoice(params: {
     ],
     promptInjectionFlags,
     chainChecks,
+    clearanceDeadline,
     clearanceSignature,
     clearanceSignaturePrefix: clearanceSignature?.slice(0, 26),
     clearanceSignatureBytes: clearanceSignature ? (clearanceSignature.length - 2) / 2 : undefined,

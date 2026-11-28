@@ -51,7 +51,7 @@ const VAULT_ABI = parseAbi([
   "function registerSubMandate(bytes32,bytes32,address,uint256,uint16,uint16,uint8,uint64,uint64,uint64,bytes)",
   "function reclaimSubMandate(bytes32,uint64,uint64,bytes)",
   "function executeAllocate(bytes32,uint256,bool,uint256,bool,uint64,uint64,bytes)",
-  "function executePayInvoice(bytes32,bytes32,address,bytes32,uint256,uint64,uint64,bytes,bytes,bytes)",
+  "function executePayInvoice(bytes32,bytes32,address,bytes32,uint256,uint64,uint64,uint64,uint64,bytes,bytes,bytes)",
   "function freeze(uint64,uint64,bytes)",
   "function unfreeze(uint64,uint64,bytes)",
   "function revokeRootEpoch(uint64,uint64,bytes)",
@@ -495,6 +495,7 @@ async function main() {
       vendor: acc.vendor.evm as `0x${string}`,
       invoiceId: paidInvoiceId,
       amount,
+      validUntil: deadline,
       vendorPqcSecret: acc.vendor.pqc.secretKey,
     });
     const researchSig = signResearchClearance({
@@ -505,6 +506,7 @@ async function main() {
       vendor: acc.vendor.evm as `0x${string}`,
       invoiceId: paidInvoiceId,
       amount,
+      deadline,
       researchPqcSecret: acc.research.pqc.secretKey,
     });
     const data = encodeFunctionData({
@@ -517,6 +519,8 @@ async function main() {
         paidInvoiceId,
         amount,
         nonce,
+        deadline,
+        deadline,
         deadline,
         paySig,
         vendorSig,
@@ -672,6 +676,7 @@ async function main() {
       vendor: acc.vendor.evm as `0x${string}`,
       invoiceId: inv,
       amount: 100_000n,
+      validUntil: deadline,
       vendorPqcSecret: acc.vendor.pqc.secretKey,
     });
     const resSig = signResearchClearance({
@@ -682,12 +687,13 @@ async function main() {
       vendor: acc.vendor.evm as `0x${string}`,
       invoiceId: inv,
       amount: 100_000n,
+      deadline,
       researchPqcSecret: acc.research.pqc.secretKey,
     });
     const data = encodeFunctionData({
       abi: VAULT_ABI,
       functionName: "executePayInvoice",
-      args: [allocMandateId, researchMandateId, acc.vendor.evm as `0x${string}`, inv, 100_000n, nonce, deadline, paySig, vendorSig, resSig],
+      args: [allocMandateId, researchMandateId, acc.vendor.evm as `0x${string}`, inv, 100_000n, nonce, deadline, deadline, deadline, paySig, vendorSig, resSig],
     });
     const r = await relayCall({
       relayer: acc.relayer,
@@ -781,6 +787,7 @@ async function main() {
       vendor: acc.unlistedAttacker.evm as `0x${string}`,
       invoiceId: inv,
       amount: 100_000n,
+      validUntil: deadline,
       vendorPqcSecret: acc.unlistedAttacker.pqc.secretKey,
     });
     const resSig = signResearchClearance({
@@ -791,12 +798,13 @@ async function main() {
       vendor: acc.unlistedAttacker.evm as `0x${string}`,
       invoiceId: inv,
       amount: 100_000n,
+      deadline,
       researchPqcSecret: acc.research.pqc.secretKey,
     });
     const data = encodeFunctionData({
       abi: VAULT_ABI,
       functionName: "executePayInvoice",
-      args: [payMandateId, researchMandateId, acc.unlistedAttacker.evm as `0x${string}`, inv, 100_000n, nonce, deadline, paySig, fakeVendorSig, resSig],
+      args: [payMandateId, researchMandateId, acc.unlistedAttacker.evm as `0x${string}`, inv, 100_000n, nonce, deadline, deadline, deadline, paySig, fakeVendorSig, resSig],
     });
     const r = await relayCall({
       relayer: acc.relayer,
@@ -845,6 +853,7 @@ async function main() {
       vendor: acc.vendor.evm as `0x${string}`,
       invoiceId: paidInvoiceId,
       amount,
+      validUntil: deadline,
       vendorPqcSecret: acc.vendor.pqc.secretKey,
     });
     const resSig = signResearchClearance({
@@ -855,12 +864,13 @@ async function main() {
       vendor: acc.vendor.evm as `0x${string}`,
       invoiceId: paidInvoiceId,
       amount,
+      deadline,
       researchPqcSecret: acc.research.pqc.secretKey,
     });
     const data = encodeFunctionData({
       abi: VAULT_ABI,
       functionName: "executePayInvoice",
-      args: [payMandateId, researchMandateId, acc.vendor.evm as `0x${string}`, paidInvoiceId, amount, nonce, deadline, paySig, vendorSig, resSig],
+      args: [payMandateId, researchMandateId, acc.vendor.evm as `0x${string}`, paidInvoiceId, amount, nonce, deadline, deadline, deadline, paySig, vendorSig, resSig],
     });
     const r = await relayCall({
       relayer: acc.relayer,
@@ -1025,6 +1035,7 @@ async function main() {
       vendor: acc.vendor.evm as `0x${string}`,
       invoiceId: inv,
       amount: 100_000n,
+      validUntil: deadline,
       vendorPqcSecret: acc.vendor.pqc.secretKey,
     });
     const resSig = signResearchClearance({
@@ -1035,6 +1046,7 @@ async function main() {
       vendor: acc.vendor.evm as `0x${string}`,
       invoiceId: inv,
       amount: 100_000n,
+      deadline,
       researchPqcSecret: acc.research.pqc.secretKey,
     });
     const rSpendFrozen = await relayCall({
@@ -1045,7 +1057,7 @@ async function main() {
       data: encodeFunctionData({
         abi: VAULT_ABI,
         functionName: "executePayInvoice",
-        args: [payMandateId, researchMandateId, acc.vendor.evm as `0x${string}`, inv, 100_000n, pNonce, deadline, pSig, vSig, resSig],
+        args: [payMandateId, researchMandateId, acc.vendor.evm as `0x${string}`, inv, 100_000n, pNonce, deadline, deadline, deadline, pSig, vSig, resSig],
       }),
       evmGasLimit: 300_000n,
       memo: "attenua: A8b spend rejected while frozen",

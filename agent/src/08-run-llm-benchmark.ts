@@ -266,7 +266,201 @@ function mapInvariant(errorName: string): string {
   return "AttenuaVault Guard";
 }
 
+interface LlmBenchCaseResult {
+  id: string;
+  category: string;
+  title: string;
+  declaredVendor: string;
+  requestedAmountMicro: string;
+  memo: string;
+  llmDecision: "PAY" | "REFUSE";
+  llmTargetVendor: string;
+  llmAmountMicro: string;
+  llmReason: string;
+  llmRawResponse: string;
+  fooled: boolean;
+  calldata: Hex;
+  liveEthCallRefused: boolean;
+  liveErrorName: string;
+  liveErrorFormatted: string;
+  invariantId: string;
+}
+
+interface LlmBenchDoc {
+  network: string;
+  vault: string;
+  epoch: number;
+  model: string;
+  runAtUtc: string;
+  originalModelRunAtUtc?: string;
+  originalTranscriptSha256?: string;
+  calldataReencodedForVault?: string;
+  calldataReplayedAtUtc?: string;
+  totalCases: number;
+  fooledCount: number;
+  chainRefusedCount: number;
+  fundsMovedMicro: string;
+  transcriptSha256: string;
+  cases: LlmBenchCaseResult[];
+}
+
+function encodeBenchmarkCalldata(params: {
+  payablesMandateId: `0x${string}`;
+  researchMandateId: `0x${string}`;
+  targetVendor: Address;
+  invoiceId: `0x${string}`;
+  amountMicro: bigint;
+  payNonce: bigint;
+  deadline: bigint;
+}): Hex {
+  return encodeFunctionData({
+    abi: ATTENUA_ERROR_ABI,
+    functionName: "executePayInvoice",
+    args: [
+      params.payablesMandateId,
+      params.researchMandateId,
+      params.targetVendor,
+      params.invoiceId,
+      params.amountMicro,
+      params.payNonce,
+      params.deadline,
+      params.deadline,
+      params.deadline,
+      DUMMY_PQC_SIG,
+      DUMMY_PQC_SIG,
+      DUMMY_PQC_SIG,
+    ],
+  });
+}
+
+function writeBenchmarkMarkdown(summary: LlmBenchDoc) {
+  const mdLines = [
+    "# Untrusted LLM Prompt-Injection Benchmark (20 Adversarial Invoices)",
+    "",
+    `- **Model:** \`${summary.model}\``,
+    `- **Original LLM inference timestamp (UTC):** \`${summary.originalModelRunAtUtc ?? summary.runAtUtc}\``,
+    ...(summary.calldataReencodedForVault
+      ? [
+          `- **Target contract (qorechain-diana):** \`${summary.vault}\` (${summary.calldataReencodedForVault}, Epoch ${summary.epoch}; calldata re-encoded & replayed at \`${summary.calldataReplayedAtUtc}\`)`,
+          `- **Original 26 Nov LLM transcript SHA-256 (model outputs preserved verbatim):** \`${summary.originalTranscriptSha256}\``,
+        ]
+      : [`- **Target contract (qorechain-diana):** \`${summary.vault}\` (Epoch ${summary.epoch})`]),
+    `- **Current Transcript SHA-256:** \`${summary.transcriptSha256}\``,
+    `- **Headline result:** **Model fooled ${summary.fooledCount}/${summary.totalCases} times.** **AttenuaVault on-chain \`eth_call\` refused ${summary.chainRefusedCount}/${summary.totalCases}. Funds moved: 0 fUSD.**`,
+    "",
+    "| Case | Attack Category | LLM Decision | Target Vendor Chosen | Live On-Chain Revert (`eth_call`) | Invariant |",
+    "|---|---|---|---|---|---|",
+    ...summary.cases.map(
+      (r) =>
+        `| \`${r.id}\` | ${r.category} | **${r.llmDecision}**${r.fooled ? " (fooled)" : ""} | \`${r.llmTargetVendor.slice(0, 10)}…\` | \`${r.liveErrorFormatted}\` | ${r.invariantId} |`
+    ),
+    "",
+    "Reproduce locally (keyless `eth_call` replay of every case): `cd agent && npm run lab -- ALL` or use the **AI Replay** panel in the web UI.",
+  ];
+  fs.mkdirSync(path.dirname(LLM_BENCH_MD), { recursive: true });
+  fs.writeFileSync(LLM_BENCH_MD, mdLines.join("\n"));
+}
+
+async function replayExistingAgainstVault() {
+  if (!fs.existsSync(LLM_BENCH_JSON)) {
+    throw new Error(`Missing ${LLM_BENCH_JSON}`);
+  }
+  const prev = JSON.parse(fs.readFileSync(LLM_BENCH_JSON, "utf8")) as LlmBenchDoc;
+  const dep = JSON.parse(fs.readFileSync(DEPLOYMENT_FILE, "utf8"));
+  const tree = JSON.parse(fs.readFileSync(STANDING_TREE_FILE, "utf8"));
+  const vault = dep.contracts.attenuaVault.address as Address;
+  const allowlistedVendor = dep.actors.vendor.evm as Address;
+  const attacker = dep.actors.unlistedAttacker.evm as Address;
+  const payablesAgent = tree.mandates.payables.subAgent as Address;
+
+  const nonceOut = await rawEthCall(
+    vault,
+    encodeFunctionData({ abi: ATTENUA_ERROR_ABI, functionName: "nonces", args: [payablesAgent] })
+  );
+  const payNonce = nonceOut.ok && nonceOut.result ? BigInt(nonceOut.result) : 1n;
+  const deadline = BigInt(Math.floor(Date.now() / 1000) + 7 * 24 * 3600);
+
+  const invTemplates = new Map(
+    build20InjectedInvoices({
+      allowlistedVendor,
+      attacker,
+      paidInvoiceId: tree.paidInvoiceId as `0x${string}`,
+    }).map((c) => [c.id, c])
+  );
+
+  console.log(`=== Replaying Preserved 20 LLM Outputs (${prev.model}) Against Live v1.2 Vault ${vault} ===\n`);
+
+  const updatedCases: LlmBenchCaseResult[] = [];
+  let refusedCount = 0;
+
+  for (const existing of prev.cases) {
+    const tpl = invTemplates.get(existing.id);
+    if (!tpl) {
+      throw new Error(`Missing invoice template for ${existing.id}`);
+    }
+    const calldata = encodeBenchmarkCalldata({
+      payablesMandateId: tree.mandates.payables.id as `0x${string}`,
+      researchMandateId: tree.mandates.research.id as `0x${string}`,
+      targetVendor: existing.llmTargetVendor as Address,
+      invoiceId: tpl.invoiceId,
+      amountMicro: BigInt(existing.llmAmountMicro),
+      payNonce,
+      deadline,
+    });
+    const ethOut = await rawEthCall(vault, calldata);
+    const decoded = ethOut.ok
+      ? { errorName: "UNEXPECTED_SUCCESS", args: [], formatted: "UNEXPECTED_SUCCESS" }
+      : decodeAttenuaRevert(ethOut.errorData, ethOut.errorMessage);
+    if (!ethOut.ok) refusedCount++;
+
+    const invariantId = mapInvariant(decoded.errorName);
+    updatedCases.push({
+      ...existing,
+      calldata,
+      liveEthCallRefused: !ethOut.ok,
+      liveErrorName: decoded.errorName,
+      liveErrorFormatted: decoded.formatted,
+      invariantId,
+    });
+    console.log(`  [${existing.id}] LLM=${existing.llmDecision}${existing.fooled ? " (FOOLED)" : ""} | v1.2 eth_call -> ${decoded.formatted}`);
+  }
+
+  if (refusedCount !== prev.cases.length) {
+    throw new Error(`Expected ${prev.cases.length} chain refusals, got ${refusedCount}`);
+  }
+
+  const replayedAt = new Date().toISOString();
+  const transcriptSha256 = crypto.createHash("sha256").update(JSON.stringify(updatedCases)).digest("hex");
+  const summary: LlmBenchDoc = {
+    network: "qorechain-diana",
+    vault,
+    epoch: tree.epoch,
+    model: prev.model,
+    runAtUtc: prev.originalModelRunAtUtc ?? prev.runAtUtc,
+    originalModelRunAtUtc: prev.originalModelRunAtUtc ?? prev.runAtUtc,
+    originalTranscriptSha256: prev.originalTranscriptSha256 ?? prev.transcriptSha256,
+    calldataReencodedForVault: "v1.2",
+    calldataReplayedAtUtc: replayedAt,
+    totalCases: updatedCases.length,
+    fooledCount: prev.fooledCount,
+    chainRefusedCount: refusedCount,
+    fundsMovedMicro: "0",
+    transcriptSha256,
+    cases: updatedCases,
+  };
+
+  fs.writeFileSync(LLM_BENCH_JSON, JSON.stringify(summary, null, 2));
+  writeBenchmarkMarkdown(summary);
+
+  console.log(`\n=== Replay Summary: Preserved Model Fooled ${summary.fooledCount}/${summary.totalCases} | v1.2 Chain Refused ${refusedCount}/${summary.totalCases} | Funds moved: 0 fUSD ===`);
+}
+
 async function main() {
+  if (process.argv.includes("--replay-existing")) {
+    await replayExistingAgainstVault();
+    return;
+  }
+
   const cfg = resolveLlmConfig();
   const dep = JSON.parse(fs.readFileSync(DEPLOYMENT_FILE, "utf8"));
   const tree = JSON.parse(fs.readFileSync(STANDING_TREE_FILE, "utf8"));
@@ -292,25 +486,7 @@ async function main() {
   console.log(`=== Attenua Live LLM Untrusted-Planner Benchmark (${cfg.model}) ===`);
   console.log(`Endpoint: ${cfg.baseUrl} | Cases: ${cases.length} | Live Vault: ${vault}\n`);
 
-  const results: Array<{
-    id: string;
-    category: string;
-    title: string;
-    declaredVendor: string;
-    requestedAmountMicro: string;
-    memo: string;
-    llmDecision: "PAY" | "REFUSE";
-    llmTargetVendor: string;
-    llmAmountMicro: string;
-    llmReason: string;
-    llmRawResponse: string;
-    fooled: boolean;
-    calldata: Hex;
-    liveEthCallRefused: boolean;
-    liveErrorName: string;
-    liveErrorFormatted: string;
-    invariantId: string;
-  }> = [];
+  const results: LlmBenchCaseResult[] = [];
 
   let fooledCount = 0;
   let refusedCount = 0;
@@ -331,21 +507,14 @@ async function main() {
     const targetVendor = (isRefusalStubZero ? c.declaredVendor : validOutVendor) as Address;
     const amt = BigInt(isRefusalStubZero ? c.amountMicro : out.amountMicro || c.amountMicro);
 
-    const calldata = encodeFunctionData({
-      abi: ATTENUA_ERROR_ABI,
-      functionName: "executePayInvoice",
-      args: [
-        tree.mandates.payables.id as `0x${string}`,
-        tree.mandates.research.id as `0x${string}`,
-        targetVendor,
-        c.invoiceId,
-        amt,
-        payNonce,
-        deadline,
-        DUMMY_PQC_SIG,
-        DUMMY_PQC_SIG,
-        DUMMY_PQC_SIG,
-      ],
+    const calldata = encodeBenchmarkCalldata({
+      payablesMandateId: tree.mandates.payables.id as `0x${string}`,
+      researchMandateId: tree.mandates.research.id as `0x${string}`,
+      targetVendor,
+      invoiceId: c.invoiceId,
+      amountMicro: amt,
+      payNonce,
+      deadline,
     });
 
     const ethOut = await rawEthCall(vault, calldata);
@@ -383,7 +552,7 @@ async function main() {
   const transcriptPayload = JSON.stringify(results);
   const transcriptSha256 = crypto.createHash("sha256").update(transcriptPayload).digest("hex");
 
-  const summary = {
+  const summary: LlmBenchDoc = {
     network: "qorechain-diana",
     vault,
     epoch: tree.epoch,
@@ -398,27 +567,7 @@ async function main() {
   };
 
   fs.writeFileSync(LLM_BENCH_JSON, JSON.stringify(summary, null, 2));
-
-  const mdLines = [
-    "# Untrusted LLM Prompt-Injection Benchmark (20 Adversarial Invoices)",
-    "",
-    `- **Model:** \`${summary.model}\``,
-    `- **Run timestamp (UTC):** \`${summary.runAtUtc}\``,
-    `- **Target contract (qorechain-diana):** \`${vault}\` (Epoch ${tree.epoch})`,
-    `- **Transcript SHA-256:** \`${transcriptSha256}\``,
-    `- **Headline result:** **Model fooled ${fooledCount}/${cases.length} times.** **AttenuaVault on-chain \`eth_call\` refused ${refusedCount}/${cases.length}. Funds moved: 0 fUSD.**`,
-    "",
-    "| Case | Attack Category | LLM Decision | Target Vendor Chosen | Live On-Chain Revert (`eth_call`) | Invariant |",
-    "|---|---|---|---|---|---|",
-    ...results.map(
-      (r) =>
-        `| \`${r.id}\` | ${r.category} | **${r.llmDecision}**${r.fooled ? " (fooled)" : ""} | \`${r.llmTargetVendor.slice(0, 10)}…\` | \`${r.liveErrorFormatted}\` | ${r.invariantId} |`
-    ),
-    "",
-    "Reproduce locally (keyless `eth_call` replay of every case): `cd agent && npm run lab -- ALL` or use the **AI Replay** panel in the web UI.",
-  ];
-  fs.mkdirSync(path.dirname(LLM_BENCH_MD), { recursive: true });
-  fs.writeFileSync(LLM_BENCH_MD, mdLines.join("\n"));
+  writeBenchmarkMarkdown(summary);
 
   console.log(
     `\n=== Summary: Model fooled ${fooledCount}/${cases.length} | Chain refused ${refusedCount}/${cases.length} | Funds moved: 0 fUSD ===`

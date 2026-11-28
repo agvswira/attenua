@@ -1,6 +1,8 @@
+import fs from "node:fs";
 import { closeEvmWindowMsg, fetchEvmWindow, openEvmWindowMsg } from "@qorechain/sdk";
 import { parseAbi } from "viem";
 import {
+  DEPLOYMENT_FILE,
   REST_URL,
   broadcastNative,
   createEvmPublicClient,
@@ -16,14 +18,25 @@ const HALLMARK_ABI = parseAbi([
   "function claim(address target, string calldata repo) external",
 ]);
 
-const TARGETS: ReadonlyArray<{ name: string; address: `0x${string}` }> = [
-  { name: "AttenuaVault", address: "0xf585fc6e1e43446f353830e0d11ff44ce747af58" },
-  { name: "QoreChainHybridHolderGuard", address: "0xf70c001e482a1112ec76684ddec4ffe3bff4c652" },
-  { name: "LiquidityVault", address: "0xb5cf1d53872255bed60ebb731e9043b7c9ff2c8b" },
-  { name: "ReserveVault", address: "0x5b914270db69cee65762c75edf1e1ce2856cc72b" },
-];
+function loadDeployedTargets(): ReadonlyArray<{ name: string; address: `0x${string}` }> {
+  const dep = JSON.parse(fs.readFileSync(DEPLOYMENT_FILE, "utf8")) as {
+    contracts: {
+      attenuaVault: { address: `0x${string}` };
+      holderGuard: { address: `0x${string}` };
+      liquidityVault: { address: `0x${string}` };
+      reserveVault: { address: `0x${string}` };
+    };
+  };
+  return [
+    { name: "AttenuaVault", address: dep.contracts.attenuaVault.address },
+    { name: "QoreChainHybridHolderGuard", address: dep.contracts.holderGuard.address },
+    { name: "LiquidityVault", address: dep.contracts.liquidityVault.address },
+    { name: "ReserveVault", address: dep.contracts.reserveVault.address },
+  ];
+}
 
 async function main() {
+  const TARGETS = loadDeployedTargets();
   const acc = await loadOrCreateSwarmAccounts();
   const evmPublic = createEvmPublicClient();
   const evmWallet = createEvmWalletClient(acc.owner.privateKey);

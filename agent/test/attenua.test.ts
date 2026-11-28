@@ -351,15 +351,16 @@ describe("Attenua PQC Signing & Domain Separation", () => {
           vendor: VENDOR,
           invoiceId: inv,
           amount: 1_500_000n,
+          validUntil: 9999999n,
           vendorPqcSecret: kp.secretKey,
         }),
         packed: encodePacked(
-          ["string", "uint256", "address", "address", "bytes32", "uint256"],
-          ["attenua-v1|VENDOR_INVOICE|", 9800n, VAULT, VENDOR, inv, 1_500_000n]
+          ["string", "uint256", "address", "address", "bytes32", "uint256", "uint64"],
+          ["attenua-v1|VENDOR_INVOICE|", 9800n, VAULT, VENDOR, inv, 1_500_000n, 9999999n]
         ),
         tampered: encodePacked(
-          ["string", "uint256", "address", "address", "bytes32", "uint256"],
-          ["attenua-v1|VENDOR_INVOICE|", 9800n, VAULT, VENDOR, inv, 1_500_001n]
+          ["string", "uint256", "address", "address", "bytes32", "uint256", "uint64"],
+          ["attenua-v1|VENDOR_INVOICE|", 9800n, VAULT, VENDOR, inv, 1_500_000n, 9999998n]
         ),
       },
       {
@@ -372,15 +373,16 @@ describe("Attenua PQC Signing & Domain Separation", () => {
           vendor: VENDOR,
           invoiceId: inv,
           amount: 1_500_000n,
+          deadline: 9999999n,
           researchPqcSecret: kp.secretKey,
         }),
         packed: encodePacked(
-          ["string", "uint256", "address", "uint64", "bytes32", "address", "bytes32", "uint256"],
-          ["attenua-v1|RESEARCH_CLEAR|", 9800n, VAULT, 1n, mid, VENDOR, inv, 1_500_000n]
+          ["string", "uint256", "address", "uint64", "bytes32", "address", "bytes32", "uint256", "uint64"],
+          ["attenua-v1|RESEARCH_CLEAR|", 9800n, VAULT, 1n, mid, VENDOR, inv, 1_500_000n, 9999999n]
         ),
         tampered: encodePacked(
-          ["string", "uint256", "address", "uint64", "bytes32", "address", "bytes32", "uint256"],
-          ["attenua-v1|RESEARCH_CLEAR|", 9800n, VAULT, 2n, mid, VENDOR, inv, 1_500_000n]
+          ["string", "uint256", "address", "uint64", "bytes32", "address", "bytes32", "uint256", "uint64"],
+          ["attenua-v1|RESEARCH_CLEAR|", 9800n, VAULT, 1n, mid, VENDOR, inv, 1_500_000n, 9999998n]
         ),
       },
       {
@@ -627,10 +629,11 @@ describe("Zero-Budget Research Prompt-Injection Screener", () => {
     assert.equal(verdict.decision, "APPROVE_CLEARANCE");
     assert.equal(verdict.clearanceSignatureBytes, 4627);
     assert.ok(verdict.clearanceSignature);
+    assert.ok(verdict.clearanceDeadline !== undefined);
 
     const packed = encodePacked(
-      ["string", "uint256", "address", "uint64", "bytes32", "address", "bytes32", "uint256"],
-      ["attenua-v1|RESEARCH_CLEAR|", 9800n, VAULT, 1n, resId, VENDOR, inv, 1_500_000n]
+      ["string", "uint256", "address", "uint64", "bytes32", "address", "bytes32", "uint256", "uint64"],
+      ["attenua-v1|RESEARCH_CLEAR|", 9800n, VAULT, 1n, resId, VENDOR, inv, 1_500_000n, verdict.clearanceDeadline]
     );
     assert.equal(
       pqcVerify(kp.publicKey, hexToBytes(packed), hexToBytes(verdict.clearanceSignature)),

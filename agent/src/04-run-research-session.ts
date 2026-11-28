@@ -94,9 +94,9 @@ async function main() {
     });
 
     let localVerifyResult = "N/A (no signature issued)";
-    if (verdict.decision === "APPROVE_CLEARANCE" && verdict.clearanceSignature) {
+    if (verdict.decision === "APPROVE_CLEARANCE" && verdict.clearanceSignature && verdict.clearanceDeadline !== undefined) {
       const packed = encodePacked(
-        ["string", "uint256", "address", "uint64", "bytes32", "address", "bytes32", "uint256"],
+        ["string", "uint256", "address", "uint64", "bytes32", "address", "bytes32", "uint256", "uint64"],
         [
           "attenua-v1|RESEARCH_CLEAR|",
           chainId,
@@ -106,6 +106,7 @@ async function main() {
           sc.input.vendor,
           sc.input.invoiceId,
           sc.input.amountMicro,
+          verdict.clearanceDeadline,
         ]
       );
       const ok = pqcVerify(

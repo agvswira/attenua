@@ -50,7 +50,7 @@ const VAULT_ABI = parseAbi([
   "function usedInvoices(bytes32) view returns (bool)",
   "function subMandates(bytes32) view returns (bytes32,address,address,uint256,uint256,uint256,uint16,uint16,uint8,uint8,uint64,uint64,bool)",
   "function portfolioSummary() view returns (uint256,uint256,uint256,uint256)",
-  "function executePayInvoice(bytes32,bytes32,address,bytes32,uint256,uint64,uint64,bytes,bytes,bytes)",
+  "function executePayInvoice(bytes32,bytes32,address,bytes32,uint256,uint64,uint64,uint64,uint64,bytes,bytes,bytes)",
 ]);
 
 interface HeartbeatRunRecord {
@@ -226,12 +226,14 @@ async function main() {
   const nowSec = Math.floor(Date.now() / 1000);
   const runId = `HB-${nowSec}`;
   const invoiceId = keccak256(toHex(`ATTENUA-${runId}-${Math.random().toString(36).slice(2, 8)}`));
+  const vendorValidUntil = BigInt(nowSec + 1800);
   const vendorSig = signVendorInvoice({
     chainId: BigInt(EVM_CHAIN_ID),
     vault,
     vendor: vendor.evm as Address,
     invoiceId,
     amount: HEARTBEAT_AMOUNT_MICRO,
+    validUntil: vendorValidUntil,
     vendorPqcSecret: vendor.pqc.secretKey,
   });
 
@@ -331,6 +333,7 @@ async function main() {
   }
 
   const deadline = BigInt(nowSec + 1800);
+  const researchDeadline = BigInt(clearanceValidUntil);
   const paySig = signPayInvoice({
     chainId: BigInt(EVM_CHAIN_ID),
     vault,
@@ -351,6 +354,7 @@ async function main() {
     vendor: vendor.evm as Address,
     invoiceId,
     amount: HEARTBEAT_AMOUNT_MICRO,
+    deadline: researchDeadline,
     researchPqcSecret: research.pqc.secretKey,
   });
 
@@ -366,6 +370,8 @@ async function main() {
       HEARTBEAT_AMOUNT_MICRO,
       payNonce,
       deadline,
+      vendorValidUntil,
+      researchDeadline,
       paySig,
       vendorSig,
       researchOnChainSig,
@@ -397,18 +403,20 @@ async function main() {
     throw new Error(`Expected usedInvoices[${invoiceKey}] == true after heartbeat tx ${txRes.txHash}`);
   }
 
-  const prev: HeartbeatFile = fs.existsSync(HEARTBEAT_FILE)
+  const emptyHistory: HeartbeatFile = {
+    network: CHAIN_ID,
+    evmChainId: EVM_CHAIN_ID,
+    vault,
+    epoch: Number(epoch),
+    securityModel: "Zero Owner Root key in runner; sub-agent Payables/Research/Vendor + AA#1 transport only",
+    totalRuns: 0,
+    lastRunUtc: new Date(nowSec * 1000).toISOString(),
+    runs: [],
+  };
+  const parsedPrev = fs.existsSync(HEARTBEAT_FILE)
     ? (JSON.parse(fs.readFileSync(HEARTBEAT_FILE, "utf8")) as HeartbeatFile)
-    : {
-        network: CHAIN_ID,
-        evmChainId: EVM_CHAIN_ID,
-        vault,
-        epoch: Number(epoch),
-        securityModel: "Zero Owner Root key in runner; sub-agent Payables/Research/Vendor + AA#1 transport only",
-        totalRuns: 0,
-        lastRunUtc: new Date(nowSec * 1000).toISOString(),
-        runs: [],
-      };
+    : null;
+  const prev = parsedPrev && parsedPrev.vault.toLowerCase() === vault.toLowerCase() ? parsedPrev : emptyHistory;
 
   const record: HeartbeatRunRecord = {
     runId,

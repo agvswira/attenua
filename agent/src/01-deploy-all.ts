@@ -312,7 +312,10 @@ async function main() {
   const selRegSub = `0x${sels["registerSubMandate(bytes32,bytes32,address,uint256,uint16,uint16,uint8,uint64,uint64,uint64,bytes)"]}`;
   const selReclaim = `0x${sels["reclaimSubMandate(bytes32,uint64,uint64,bytes)"]}`;
   const selAlloc = `0x${sels["executeAllocate(bytes32,uint256,bool,uint256,bool,uint64,uint64,bytes)"]}`;
-  const selPay = `0x${sels["executePayInvoice(bytes32,bytes32,address,bytes32,uint256,uint64,uint64,bytes,bytes,bytes)"]}`;
+  const selPay = `0x${sels["executePayInvoice(bytes32,bytes32,address,bytes32,uint256,uint64,uint64,uint64,uint64,bytes,bytes,bytes)"]}`;
+  if (selPay === "0xundefined") {
+    throw new Error("AttenuaVault v1.2 executePayInvoice selector not found in methodIdentifiers!");
+  }
   const selRevokeEpoch = `0x${sels["revokeRootEpoch(uint64,uint64,bytes)"]}`;
   const selUnfreeze = `0x${sels["unfreeze(uint64,uint64,bytes)"]}`;
   const selFreeze = `0x${sels["freeze(uint64,uint64,bytes)"]}`;
@@ -320,7 +323,7 @@ async function main() {
   const selSetMonitor = `0x${sels["setMonitorSigner(address,uint64,uint64,bytes)"]}`;
   const selEmergRedeem = `0x${sels["emergencyRedeemVaults(address,uint64,uint64,bytes)"]}`;
 
-  const expiryUnix = Math.floor(Date.now() / 1000) + 14 * 24 * 3600;
+  const expiryUnix = Math.floor(Date.now() / 1000) + 29 * 24 * 3600;
   const orchProof = signAuthenticatorLinkEd25519({
     chainId: CHAIN_ID,
     account: acc.owner.cosmos,

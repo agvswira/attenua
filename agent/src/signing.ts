@@ -241,11 +241,20 @@ export function signVendorInvoice(params: {
   vendor: `0x${string}`;
   invoiceId: `0x${string}`;
   amount: bigint;
+  validUntil: bigint;
   vendorPqcSecret: Uint8Array;
 }): `0x${string}` {
   const packed = encodePacked(
-    ["string", "uint256", "address", "address", "bytes32", "uint256"],
-    ["attenua-v1|VENDOR_INVOICE|", params.chainId, params.vault, params.vendor, params.invoiceId, params.amount]
+    ["string", "uint256", "address", "address", "bytes32", "uint256", "uint64"],
+    [
+      "attenua-v1|VENDOR_INVOICE|",
+      params.chainId,
+      params.vault,
+      params.vendor,
+      params.invoiceId,
+      params.amount,
+      params.validUntil,
+    ]
   );
   return signPackedPqc(params.vendorPqcSecret, packed);
 }
@@ -258,10 +267,11 @@ export function signResearchClearance(params: {
   vendor: `0x${string}`;
   invoiceId: `0x${string}`;
   amount: bigint;
+  deadline: bigint;
   researchPqcSecret: Uint8Array;
 }): `0x${string}` {
   const packed = encodePacked(
-    ["string", "uint256", "address", "uint64", "bytes32", "address", "bytes32", "uint256"],
+    ["string", "uint256", "address", "uint64", "bytes32", "address", "bytes32", "uint256", "uint64"],
     [
       "attenua-v1|RESEARCH_CLEAR|",
       params.chainId,
@@ -271,6 +281,7 @@ export function signResearchClearance(params: {
       params.vendor,
       params.invoiceId,
       params.amount,
+      params.deadline,
     ]
   );
   return signPackedPqc(params.researchPqcSecret, packed);

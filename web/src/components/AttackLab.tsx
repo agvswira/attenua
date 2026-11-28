@@ -475,6 +475,8 @@ export function AttackLab({ live }: AttackLabProps) {
             500_000n,
             payNonce,
             deadline,
+            deadline,
+            deadline,
             DUMMY_PQC_SIG,
             DUMMY_PQC_SIG,
             DUMMY_PQC_SIG,

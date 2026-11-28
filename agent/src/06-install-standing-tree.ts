@@ -50,7 +50,7 @@ const VAULT_ABI = parseAbi([
   "function setRootMandate(address,uint256,uint16,uint16,uint8,uint8,uint64,uint64,uint64,bytes)",
   "function setVendor(address,bool,uint64,uint64,bytes)",
   "function registerSubMandate(bytes32,bytes32,address,uint256,uint16,uint16,uint8,uint64,uint64,uint64,bytes)",
-  "function executePayInvoice(bytes32,bytes32,address,bytes32,uint256,uint64,uint64,bytes,bytes,bytes)",
+  "function executePayInvoice(bytes32,bytes32,address,bytes32,uint256,uint64,uint64,uint64,uint64,bytes,bytes,bytes)",
   // Errors for keyless decoding
   "error RootMandateInactive()",
   "error VaultIsFrozen()",
@@ -641,6 +641,8 @@ async function main() {
           fakeId,
           100_000n,
           payNonceNow,
+          fakeDead,
+          fakeDead,
           fakeDead,
           dummySig,
           dummySig,
