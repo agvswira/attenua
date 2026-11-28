@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import { fetchAuthenticators, fetchEvmWindow, fetchPqcStatus, fetchSpendingRules } from "@qorechain/sdk";
+import { fetchAuthenticators, fetchEvmWindow, fetchPqcStatus, fetchSpendingRules, pqcStatusPublicKey } from "@qorechain/sdk";
 import { parseAbi } from "viem";
 import {
   DEPLOYMENT_FILE,
@@ -11,11 +11,15 @@ import {
   createEvmPublicClient,
 } from "./config.js";
 import path from "node:path";
+import { envelopeFromText, parseEnvelope, verifyRecipientCard, type RecipientCard } from "@qorechain/qoreseal";
+import { fetchKemKey } from "@qorechain/qoreseal/network";
 import { runQoreMcpPreflight } from "./qore-mcp-preflight.js";
 import { DECODED_ATTACKS_FILE, decodeHistoricalAttack } from "./decode-historical-attacks.js";
+import { CHAIN_ID } from "./config.js";
 
 const STANDING_TREE_FILE = path.join(REPO_ROOT, "deployments", "standing-tree.json");
 const CBOM_FILE = path.join(REPO_ROOT, "docs", "cbom.json");
+const AUTH_MSG_FILE = path.join(REPO_ROOT, "deployments", "authenticated-message.json");
 
 const GUARD_ABI = parseAbi([
   "function owner() view returns (address)",
@@ -240,6 +244,65 @@ async function main() {
         `A1=${a1Live.formattedError} (@${a1Live.replayHeight}); A10=${a10Live.formattedError} (@${a10Live.replayHeight})`
       );
     }
+  }
+
+  // 11. Authenticated Inter-Agent Messaging (QoreSign + QoreSeal ML-KEM-1024 on-chain KEM registry)
+  const [orchKem, payKem, orchPqcStatus, payPqcStatus] = await Promise.all([
+    fetchKemKey({ rest: REST_URL, address: dep.actors.orchestratorPqc.cosmos }),
+    fetchKemKey({ rest: REST_URL, address: dep.actors.payables.cosmos }),
+    fetchPqcStatus({ rest: REST_URL, address: dep.actors.orchestratorPqc.cosmos }),
+    fetchPqcStatus({ rest: REST_URL, address: dep.actors.payables.cosmos }),
+  ]);
+  check(
+    "On-chain ML-KEM-1024 key registered (OrchestratorPqc)",
+    Boolean(orchKem.registered && orchKem.algorithmId === 2 && orchKem.publicKey?.length === 1568),
+    `${dep.actors.orchestratorPqc.cosmos} (alg=${orchKem.algorithmId}, height=${orchKem.registeredHeight ?? "?"})`
+  );
+  check(
+    "On-chain ML-KEM-1024 key registered (Payables)",
+    Boolean(payKem.registered && payKem.algorithmId === 2 && payKem.publicKey?.length === 1568),
+    `${dep.actors.payables.cosmos} (alg=${payKem.algorithmId}, height=${payKem.registeredHeight ?? "?"})`
+  );
+
+  if (fs.existsSync(AUTH_MSG_FILE)) {
+    const authDoc = JSON.parse(fs.readFileSync(AUTH_MSG_FILE, "utf8")) as {
+      recipientCards?: { orchestratorPqc?: RecipientCard; payables?: RecipientCard };
+      envelope?: { text?: string };
+      verifiedClearance?: { shake256Digest?: string };
+    };
+    const orchPqPub = pqcStatusPublicKey(orchPqcStatus);
+    const payPqPub = pqcStatusPublicKey(payPqcStatus);
+    let cardsValid = false;
+    if (
+      authDoc.recipientCards?.orchestratorPqc &&
+      authDoc.recipientCards?.payables &&
+      orchPqPub &&
+      payPqPub &&
+      orchKem.publicKey &&
+      payKem.publicKey
+    ) {
+      verifyRecipientCard({
+        card: authDoc.recipientCards.orchestratorPqc,
+        chainId: CHAIN_ID,
+        address: dep.actors.orchestratorPqc.cosmos,
+        pqPublicKey: orchPqPub,
+        mlkemPublicKey: orchKem.publicKey,
+      });
+      verifyRecipientCard({
+        card: authDoc.recipientCards.payables,
+        chainId: CHAIN_ID,
+        address: dep.actors.payables.cosmos,
+        pqPublicKey: payPqPub,
+        mlkemPublicKey: payKem.publicKey,
+      });
+      cardsValid = true;
+    }
+    const envParsed = authDoc.envelope?.text ? parseEnvelope(envelopeFromText(authDoc.envelope.text)) : null;
+    check(
+      "QoreSeal + QoreSign clearance envelope & cards verified against live chain keys",
+      cardsValid && envParsed?.mode === "hybrid" && envParsed.entries.length === 2,
+      `mode=${envParsed?.mode}, recipients=${envParsed?.entries.length}, shake256=${authDoc.verifiedClearance?.shake256Digest?.slice(0, 18)}...`
+    );
   }
 
   console.log(`\n=== Summary: ${pass} PASSED, ${fail} FAILED ===`);
