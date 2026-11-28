@@ -67,12 +67,16 @@ export const ATTENUA_ERROR_ABI = parseAbi([
   "error PqcSignatureInvalid(address account)",
 ]);
 
-export async function rawEthCall(to: Address, data: Hex): Promise<{ ok: boolean; result?: Hex; errorData?: Hex; errorMessage?: string }> {
+export async function rawEthCall(
+  to: Address,
+  data: Hex,
+  blockTag: string = "latest"
+): Promise<{ ok: boolean; result?: Hex; errorData?: Hex; errorMessage?: string }> {
   for (let attempt = 0; attempt < 4; attempt++) {
     const res = await fetch(EVM_RPC_URL, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to, data }, "latest"] }),
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to, data }, blockTag] }),
     });
     if (res.status === 503 || res.status === 429) {
       await new Promise((r) => setTimeout(r, 700 * (attempt + 1)));

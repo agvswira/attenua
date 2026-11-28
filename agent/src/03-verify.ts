@@ -12,6 +12,7 @@ import {
 } from "./config.js";
 import path from "node:path";
 import { runQoreMcpPreflight } from "./qore-mcp-preflight.js";
+import { DECODED_ATTACKS_FILE, decodeHistoricalAttack } from "./decode-historical-attacks.js";
 
 const STANDING_TREE_FILE = path.join(REPO_ROOT, "deployments", "standing-tree.json");
 const CBOM_FILE = path.join(REPO_ROOT, "docs", "cbom.json");
@@ -208,6 +209,37 @@ async function main() {
       cbom.bomFormat === "CycloneDX" && Array.isArray(cbom.components) && cbom.components.length > 0,
       `format=${cbom.bomFormat}, components=${cbom.components?.length ?? 0}`
     );
+  }
+
+  // 10. Historical attack archive revert decoding (height - 1 eth_call)
+  if (fs.existsSync(DECODED_ATTACKS_FILE)) {
+    const decFile = JSON.parse(fs.readFileSync(DECODED_ATTACKS_FILE, "utf8")) as {
+      attacks?: Array<{ id: string; aaFailedEvent?: boolean; errorName?: string }>;
+    };
+    const decCount = decFile.attacks?.length ?? 0;
+    const allAaFailed = (decFile.attacks ?? []).every((a) => Boolean(a.aaFailedEvent));
+    check(
+      "Historical attack reverts cataloged (A1-A10)",
+      decCount === 10 && allAaFailed,
+      `${decCount}/10 decoded with abstractaccount_execution_failed`
+    );
+
+    const evData = JSON.parse(fs.readFileSync(EVIDENCE_FILE, "utf8")) as {
+      attacks: Array<{ id: string; txHash: string; summary?: string; verbatimReason?: string }>;
+    };
+    const a1Entry = evData.attacks.find((a) => a.id === "A1");
+    const a10Entry = evData.attacks.find((a) => a.id === "A10");
+    if (a1Entry && a10Entry) {
+      const [a1Live, a10Live] = await Promise.all([
+        decodeHistoricalAttack(a1Entry),
+        decodeHistoricalAttack(a10Entry),
+      ]);
+      check(
+        "Live archive height-1 eth_call replay (A1 & A10)",
+        a1Live.errorName === "AttenuationBandWidened" && a10Live.errorName === "SelfDelegationNotAllowed",
+        `A1=${a1Live.formattedError} (@${a1Live.replayHeight}); A10=${a10Live.formattedError} (@${a10Live.replayHeight})`
+      );
+    }
   }
 
   console.log(`\n=== Summary: ${pass} PASSED, ${fail} FAILED ===`);
