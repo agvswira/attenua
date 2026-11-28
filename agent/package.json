@@ -12,6 +12,7 @@
     "lab": "tsx src/07-lab-cli.ts",
     "decode:attacks": "tsx src/decode-historical-attacks.ts",
     "seal:live": "tsx src/09-register-kem-and-seal.ts",
+    "heartbeat": "tsx src/10-run-heartbeat.ts",
     "bench:llm": "tsx src/08-run-llm-benchmark.ts",
     "cbom": "qorescan scan --network testnet --address qor1k4xryjqufhdh44hgsqdpj5llr7y3dwyfenxfqg --address qor1f5emshdp3pth6rj6y0skrncqcvhdtn9njql2e0 --address qor1yqpmyqpl73s8y9uwgrnt2p8ukcq5497wz9czxy --solidity ../contracts/src --out ../docs/cbom.json",
     "mcp": "tsx src/mcp-server.ts",

@@ -1,0 +1,28 @@
+{
+  "network": "qorechain-diana",
+  "evmChainId": 9800,
+  "vault": "0xf585fc6e1e43446f353830e0d11ff44ce747af58",
+  "epoch": 2,
+  "securityModel": "Zero Owner Root key in runner; sub-agent Payables/Research/Vendor + AA#1 transport only",
+  "totalRuns": 1,
+  "lastRunUtc": "2026-11-28T18:33:42.000Z",
+  "runs": [
+    {
+      "runId": "HB-1795890822",
+      "timestampUtc": "2026-11-28T18:33:42.000Z",
+      "txHash": "8C722903FD6684909AEB14116A82548356BC127411ABBC65EF8943C9F3C1DA42",
+      "blockHeight": 10924829,
+      "evmGasUsed": "646067",
+      "amountMicro": "10000",
+      "invoiceId": "0x9ddbd9fd1af04ef59e8a283a478354a6fcdcfab65f26958baede472429d9fed8",
+      "invoiceKey": "0x2adbc62f2709c9861462fe4a7698c0f849a8c1762f41f689ab59daa7c494436c",
+      "vendor": "0x2cF96cFCd6cba46D698f3fcd1B726027E04C0808",
+      "screeningMode": "mcp_deterministic",
+      "qoreSealEnvelopeBytes": 9936,
+      "clearanceShake256": "0xe884aa8f6bbd4f614dd82027b0b387715ba2fb76e2dcd1223011b53801cd41f6",
+      "vaultIdleAfterMicro": "490000",
+      "payablesSpentAfterMicro": "10000",
+      "payablesBudgetMicro": "2000000"
+    }
+  ]
+}

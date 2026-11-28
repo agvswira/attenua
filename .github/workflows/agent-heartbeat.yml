@@ -1,0 +1,67 @@
+name: Live PQ Agent Heartbeat
+
+on:
+  schedule:
+    # Autonomous 0.01 fUSD post-quantum settlement every 6 hours (zero Owner Root key in CI)
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  heartbeat:
+    name: Research (QoreSign+QoreSeal) -> Payables (3x ML-DSA-87)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check limited sub-agent CI secrets
+        id: secrets
+        env:
+          HAS_PAYABLES: ${{ secrets.ATTENUA_PAYABLES_MNEMONIC != '' }}
+          HAS_RESEARCH: ${{ secrets.ATTENUA_RESEARCH_MNEMONIC != '' }}
+          HAS_VENDOR: ${{ secrets.ATTENUA_VENDOR_MNEMONIC != '' }}
+          HAS_RELAYER: ${{ secrets.ATTENUA_RELAYER_MNEMONIC != '' }}
+          HAS_ORCH_ED: ${{ secrets.ATTENUA_ORCH_ED25519_HEX != '' }}
+        run: |
+          if [ "$HAS_PAYABLES" = "true" ] && [ "$HAS_RESEARCH" = "true" ] && [ "$HAS_VENDOR" = "true" ] && [ "$HAS_RELAYER" = "true" ] && [ "$HAS_ORCH_ED" = "true" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Sub-agent heartbeat secrets not configured yet (Owner Root key is NEVER stored in CI). Skipping live broadcast."
+          fi
+
+      - name: Install agent dependencies
+        if: steps.secrets.outputs.ready == 'true'
+        working-directory: agent
+        run: npm ci
+
+      - name: Run live 0.01 fUSD QoreSeal + 3x ML-DSA-87 heartbeat
+        if: steps.secrets.outputs.ready == 'true'
+        working-directory: agent
+        env:
+          ATTENUA_RELAYER_MNEMONIC: ${{ secrets.ATTENUA_RELAYER_MNEMONIC }}
+          ATTENUA_ORCH_ED25519_HEX: ${{ secrets.ATTENUA_ORCH_ED25519_HEX }}
+          ATTENUA_PAYABLES_MNEMONIC: ${{ secrets.ATTENUA_PAYABLES_MNEMONIC }}
+          ATTENUA_RESEARCH_MNEMONIC: ${{ secrets.ATTENUA_RESEARCH_MNEMONIC }}
+          ATTENUA_VENDOR_MNEMONIC: ${{ secrets.ATTENUA_VENDOR_MNEMONIC }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: npm run heartbeat
+
+      - name: Commit updated deployments/heartbeat.json
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          git config user.name "Komang Agus Wira Adnyana"
+          git config user.email "kmagus104@gmail.com"
+          git add deployments/heartbeat.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(heartbeat): record live 0.01 fUSD PQ settlement [skip ci]"
+            git push
+          fi

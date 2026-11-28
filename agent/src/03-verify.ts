@@ -20,6 +20,7 @@ import { CHAIN_ID } from "./config.js";
 const STANDING_TREE_FILE = path.join(REPO_ROOT, "deployments", "standing-tree.json");
 const CBOM_FILE = path.join(REPO_ROOT, "docs", "cbom.json");
 const AUTH_MSG_FILE = path.join(REPO_ROOT, "deployments", "authenticated-message.json");
+const HEARTBEAT_FILE = path.join(REPO_ROOT, "deployments", "heartbeat.json");
 
 const GUARD_ABI = parseAbi([
   "function owner() view returns (address)",
@@ -32,6 +33,7 @@ const VAULT_ABI = parseAbi([
   "function monitorSigner() view returns (address)",
   "function rootEpoch() view returns (uint64)",
   "function frozen() view returns (bool)",
+  "function usedInvoices(bytes32) view returns (bool)",
   "function rootMandate() view returns (address,uint256,uint256,uint256,uint16,uint16,uint8,uint8,uint64,uint64,bool)",
   "function subMandates(bytes32) view returns (bytes32,address,address,uint256,uint256,uint256,uint16,uint16,uint8,uint8,uint64,uint64,bool)",
   "function portfolioSummary() view returns (uint256,uint256,uint256,uint256)",
@@ -303,6 +305,34 @@ async function main() {
       cardsValid && envParsed?.mode === "hybrid" && envParsed.entries.length === 2,
       `mode=${envParsed?.mode}, recipients=${envParsed?.entries.length}, shake256=${authDoc.verifiedClearance?.shake256Digest?.slice(0, 18)}...`
     );
+  }
+
+  // 12. Live Autonomous Agent Heartbeat verification (usedInvoices == true on Diana)
+  if (fs.existsSync(HEARTBEAT_FILE)) {
+    const hb = JSON.parse(fs.readFileSync(HEARTBEAT_FILE, "utf8")) as {
+      totalRuns?: number;
+      runs?: Array<{
+        runId: string;
+        timestampUtc: string;
+        txHash: string;
+        invoiceKey: `0x${string}`;
+        blockHeight: number;
+      }>;
+    };
+    const latest = hb.runs?.[0];
+    if (latest) {
+      const paid = await evm.readContract({
+        address: dep.contracts.attenuaVault.address,
+        abi: VAULT_ABI,
+        functionName: "usedInvoices",
+        args: [latest.invoiceKey],
+      });
+      check(
+        "Live autonomous sub-agent heartbeat settled on-chain",
+        paid === true,
+        `${latest.runId} @ block ${latest.blockHeight} (${latest.timestampUtc}) tx=${latest.txHash.slice(0, 14)}...`
+      );
+    }
   }
 
   console.log(`\n=== Summary: ${pass} PASSED, ${fail} FAILED ===`);
