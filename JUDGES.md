@@ -11,10 +11,10 @@ No private keys, wallet extensions, or API keys are required to verify every sec
 | **Scoped EVM window** | [`agent/src/01-deploy-all.ts:342-352`](agent/src/01-deploy-all.ts), [`03-verify.ts:86-89`](agent/src/03-verify.ts), [`05-claim-hallmark.ts`](agent/src/05-claim-hallmark.ts) | Owner AA #1 EVM window opened scoped for deploy & closed (`live=false`) | `cd agent && npm run verify` |
 | **Tx / value / duration / target limits** | [`AttenuaVault.sol:455-575`](contracts/src/AttenuaVault.sol), [`01-deploy-all.ts:342-352`](agent/src/01-deploy-all.ts) | Root `20 fUSD`, `maxDepth 2`, `expiry` & per-child lattice (`H1–H7`, `A1–A10`) | `cd agent && npm run lab -- ALL` |
 | **Smart-account spending rules** | `AA #1` (`10 fUSD/tx`, `25 fUSD/day`, zero ERC-20 allowance) + `AA #2` (`0 fUSD`, `1 uqor/day`, `freeze()` selector `0xbd2d305f` only) in [`03-verify.ts:90-108`](agent/src/03-verify.ts) | `A7` (`BD069AFF...8B7D6`), `A8` (`8111C7BD...5B88`) | `cd agent && npm run verify` |
-| **Authenticated inter-agent messaging** | Research → Payables + Orchestrator clearance signed with `@qorechain/qoresign` (`ML-DSA-87`) & sealed with `@qorechain/qoreseal` (`ML-KEM-1024`) | Pending P1 commit (adds `authenticated-messaging.ts` + live `MsgRegisterKEMKey` tx) | `cd agent && npm test` |
+| **Authenticated inter-agent messaging** | Research → Payables + Orchestrator clearance signed with `@qorechain/qoresign` (`ML-DSA-87`) & `@qorechain/pqc` (`SHAKE-256`), sealed via `@qorechain/qoreseal` (`ML-KEM-1024 + X25519`) in [`authenticated-messaging.ts`](agent/src/authenticated-messaging.ts) & [`09-register-kem-and-seal.ts`](agent/src/09-register-kem-and-seal.ts) | Live `MsgRegisterKEMKey` txs `A84387CE...79DCCCEF` (block `10924190`, `OrchestratorPqc`) & `7CD72E4A...501F5D9EB` (block `10924196`, `Payables`) + [`deployments/authenticated-message.json`](deployments/authenticated-message.json) | `cd agent && npm test && npm run verify` |
 
-> **Why Attack Txs Show Cosmos `code = 0` on Explorer:** In QoreChain `x/abstractaccount` `MsgExecuteEVM`, an inner EVM contract revert marks the transaction with an `abstractaccount_execution_failed` event while the outer Cosmos wrapper keeps `code = 0` so gas/replay accounting holds cleanly. Check both the `abstractaccount_execution_failed` attribute and the historical `height - 1` `eth_call` custom-error decode (implemented in `agent/src/decode-historical-attacks.ts` in the next commit).
-> **QoreScan CBOM Usage:** `@qorechain/qorescan` runs directly via the `cbom` CLI script (`cd agent && npm run cbom`) to generate [`docs/cbom.json`](docs/cbom.json) (13 CycloneDX components), verified by [`03-verify.ts:204-211`](agent/src/03-verify.ts).
+> **Why Attack Txs Show Cosmos `code = 0` on Explorer:** In QoreChain `x/abstractaccount` `MsgExecuteEVM`, an inner EVM contract revert marks the transaction with an `abstractaccount_execution_failed` event while the outer Cosmos wrapper keeps `code = 0` so gas/replay accounting holds cleanly. Run `cd agent && npm run decode:attacks` (replays each historical tx via `eth_call` at block `height - 1` against Diana's archive EVM RPC) to decode exact Solidity custom errors into [`deployments/decoded-attacks.json`](deployments/decoded-attacks.json).
+> **QoreScan CBOM Usage:** `@qorechain/qorescan` runs directly via the `cbom` CLI script (`cd agent && npm run cbom`) to generate [`docs/cbom.json`](docs/cbom.json) (16 CycloneDX components), verified by [`03-verify.ts:204-211`](agent/src/03-verify.ts).
 
 ---
 
@@ -39,11 +39,12 @@ In the **Attack the lattice** section, all calls fire straight from your browser
 ## 4:00 — Terminal Verification (Keyless)
 
 ```bash
-# 1. 26 read-only live checks on qorechain-diana (+ @qorechain/mcp preflight & QoreScan CBOM)
+# 1. 31 read-only live checks on qorechain-diana (KEM registry, archive decoder, @qorechain/mcp & QoreScan CBOM)
 cd agent && npm ci && npm run verify
 
-# 2. 10 live keyless eth_call Attack Lab presets from terminal
+# 2. 10 live keyless eth_call Attack Lab presets + 10 historical height-1 archive attack decoders
 npm run lab -- ALL
+npm run decode:attacks
 
 # 3. Agent unit, fuzz (200 runs) & 120-step differential model sync
 npm test

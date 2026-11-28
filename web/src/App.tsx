@@ -10,11 +10,13 @@ import { EvidenceChip } from "./components/EvidenceChip";
 import { InspectorDialog } from "./components/InspectorDialog";
 import { WalletPostureDialog } from "./components/WalletPostureDialog";
 import {
+  AUTHENTICATED_MESSAGE,
   DEPLOYMENT,
   EVIDENCE,
   EVM_RPC_URL,
   EXPLORER_BASE,
   QORE_CHAIN_HEX,
+  explorerTxUrl,
   fetchLiveChainSnapshot,
   formatBps,
   formatFusd,
@@ -573,6 +575,81 @@ export function App() {
 
         {/* Live Keyless Interactive Attack Lab + AI Replay */}
         <AttackLab live={live} />
+
+        {/* Authenticated Inter-Agent Messaging (QoreSign + QoreSeal) */}
+        <section
+          id="messaging"
+          className="surface-card reveal-card"
+          aria-labelledby="messaging-heading"
+        >
+          <div className="card-head">
+            <div className="card-title-group">
+              <h2 id="messaging-heading" className="card-title">
+                Authenticated Inter-Agent Messaging · QoreSign + QoreSeal
+              </h2>
+              <p className="card-desc">
+                Off-chain invoice memos &amp; Research LLM clearance verdicts stay confidential via hybrid{" "}
+                <code>ML-KEM-1024 + X25519</code> (<code>@qorechain/qoreseal</code>) and domain-separated{" "}
+                <code>ML-DSA-87</code> signatures (<code>@qorechain/qoresign</code> +{" "}
+                <code>@qorechain/pqc</code>).
+              </p>
+            </div>
+            <span className="pill pill-ok">ML-DSA-87 + ML-KEM-1024 Verified</span>
+          </div>
+
+          <div className="holdings-list">
+            <div className="holding-row">
+              <span className="holding-name">Sender · Research (ML-DSA-87 + SHAKE-256)</span>
+              <span className="holding-amount">
+                {AUTHENTICATED_MESSAGE.verifiedClearance.payload.verdict} ·{" "}
+                {AUTHENTICATED_MESSAGE.verifiedClearance.shake256Digest.slice(0, 14)}…
+              </span>
+              <span className="holding-addr mono">{shortAddr(AUTHENTICATED_MESSAGE.sender.cosmos)}</span>
+            </div>
+            <div className="holding-row">
+              <span className="holding-name">Recipient 1 · OrchestratorPqc (ML-KEM-1024)</span>
+              <span className="holding-amount">
+                block #{AUTHENTICATED_MESSAGE.kemRegistry.orchestratorPqc.registeredHeight}
+              </span>
+              <a
+                className="holding-addr"
+                href={explorerTxUrl(AUTHENTICATED_MESSAGE.kemRegistry.orchestratorPqc.txHash)}
+                target="_blank"
+                rel="noreferrer"
+                title={`MsgRegisterKEMKey tx · ${AUTHENTICATED_MESSAGE.kemRegistry.orchestratorPqc.txHash}`}
+              >
+                {shortAddr(AUTHENTICATED_MESSAGE.kemRegistry.orchestratorPqc.txHash)} ↗
+              </a>
+            </div>
+            <div className="holding-row">
+              <span className="holding-name">Recipient 2 · Payables (ML-KEM-1024)</span>
+              <span className="holding-amount">
+                block #{AUTHENTICATED_MESSAGE.kemRegistry.payables.registeredHeight}
+              </span>
+              <a
+                className="holding-addr"
+                href={explorerTxUrl(AUTHENTICATED_MESSAGE.kemRegistry.payables.txHash)}
+                target="_blank"
+                rel="noreferrer"
+                title={`MsgRegisterKEMKey tx · ${AUTHENTICATED_MESSAGE.kemRegistry.payables.txHash}`}
+              >
+                {shortAddr(AUTHENTICATED_MESSAGE.kemRegistry.payables.txHash)} ↗
+              </a>
+            </div>
+            <div className="holding-row">
+              <span className="holding-name">QoreSeal Hybrid Envelope</span>
+              <span className="holding-amount">
+                {AUTHENTICATED_MESSAGE.envelope.byteLength.toLocaleString()} bytes ·{" "}
+                {AUTHENTICATED_MESSAGE.envelope.recipientCount} recipients · RecipientCards verified
+              </span>
+              <span className="holding-addr mono">{AUTHENTICATED_MESSAGE.purpose}</span>
+            </div>
+          </div>
+
+          <pre className="verbatim-box">
+            {`${AUTHENTICATED_MESSAGE.envelope.text.slice(0, 140)}…\nSHAKE-256: ${AUTHENTICATED_MESSAGE.verifiedClearance.shake256Digest} · Payables & OrchestratorPqc unsealed + ML-DSA-87 verified on-chain`}
+          </pre>
+        </section>
 
         {/* Lower Section: Invariants (Left) | Treasury + Run Timeline (Right) */}
         <div className="lower-grid">

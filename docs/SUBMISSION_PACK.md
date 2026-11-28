@@ -38,6 +38,7 @@ qor19nukelxkewjx66v08lx3kunqylsyczqgflfzhq
 - QoreChain SDK (TypeScript) — `@qorechain/sdk` `^0.14.0`
 - `qorechain-pqc` (TypeScript) — `@qorechain/pqc` `^0.2.3`
 - QoreSign (TypeScript) — `@qorechain/qoresign` `^0.2.0`
+- QoreSeal (TypeScript) — `@qorechain/qoreseal` `^0.1.0` (`ML-KEM-1024` + `X25519` encrypted Research → Payables clearance)
 - Asset Kit (TypeScript, Solidity) — `@qorechain/asset-kit` `^0.1.0` + Apache-2.0 `QoreChainHybridHolderGuard` & `QoreChainRwaVault`
 - MCP + `qore` CLI (`@modelcontextprotocol/sdk` server in `agent/src/mcp-server.ts` + `@qorechain/mcp` preflight audit in `agent/src/qore-mcp-preflight.ts`)
 - `@qorechain/qorescan` (CycloneDX 1.6 CBOM inventory in `docs/cbom.json`)
@@ -45,6 +46,7 @@ qor19nukelxkewjx66v08lx3kunqylsyczqgflfzhq
 **Network features used (verified live on `qorechain-diana`):**
 - Hybrid `ML-DSA-87` transactions
 - PQC key registration with proof of possession
+- QoreSeal and the encryption key registry (`MsgRegisterKEMKey` tx `A84387CE0B0CE54E813A29E17174D506799A72523157A4C6172C2F5E79DCCCEF` from `qor1f5em...l2e0` + `7CD72E4A...501F5D9EB` from `qor1yqpm...czxy`)
 - EVM window (incl. scoped)
 - Solidity PQC signature check (`0x...0a01`)
 - Solidity PQC key status (`0x...0a02`)

@@ -818,7 +818,8 @@ export function AttackLab({ live }: AttackLabProps) {
             <h3 className="node-title">AI Replay · Untrusted LLM vs AttenuaVault</h3>
             {BENCHMARK_DATA ? (
               <p className="card-desc">
-                Model <code>{BENCHMARK_DATA.model}</code> ({BENCHMARK_DATA.runAtUtc.slice(0, 10)}, SHA-256{" "}
+                Gateway <code>eiairouter.cloud/v1</code> · model <code>{BENCHMARK_DATA.model}</code> (
+                {BENCHMARK_DATA.runAtUtc.slice(0, 10)}, SHA-256{" "}
                 <code>{BENCHMARK_DATA.transcriptSha256.slice(0, 12)}…</code>):{" "}
                 <strong>
                   fooled {BENCHMARK_DATA.fooledCount}/{BENCHMARK_DATA.totalCases}

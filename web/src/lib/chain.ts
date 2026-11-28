@@ -12,6 +12,8 @@ import {
 import deployment from "@deployments/qorechain-diana.json";
 import evidence from "@deployments/live-run-evidence.json";
 import standingTree from "@deployments/standing-tree.json";
+import decodedAttacks from "@deployments/decoded-attacks.json";
+import authenticatedMessage from "@deployments/authenticated-message.json";
 
 export const EVM_RPC_URL = "https://evm-testnet.qore.host";
 export const EXPLORER_BASE = "https://dashboard.qorechain.io/explorer";
@@ -25,6 +27,8 @@ const SNAPSHOT_CACHE_KEY = "attenua-snapshot-cache-v1";
 export type DeploymentManifest = typeof deployment;
 export type LiveRunEvidence = typeof evidence;
 export type StandingTreeManifest = typeof standingTree;
+export type DecodedAttacksManifest = typeof decodedAttacks;
+export type AuthenticatedMessageManifest = typeof authenticatedMessage;
 
 export interface EvidenceEntry {
   id: string;
@@ -109,6 +113,8 @@ export interface LiveSimulationResult {
 export const DEPLOYMENT: DeploymentManifest = deployment;
 export const EVIDENCE: LiveRunEvidence = evidence;
 export const STANDING_TREE: StandingTreeManifest = standingTree;
+export const DECODED_ATTACKS: DecodedAttacksManifest = decodedAttacks;
+export const AUTHENTICATED_MESSAGE: AuthenticatedMessageManifest = authenticatedMessage;
 
 export const ADDRESS_PRESETS: Array<{ label: string; address: Address }> = [
   { label: "Owner", address: DEPLOYMENT.abstractAccounts.ownerTreasuryAA1.evm as Address },
@@ -333,19 +339,21 @@ export function getInspectorItem(
       id: "verify",
       kind: "check",
       eyebrow: "verify · Keyless CLI audit (cd agent && npm run verify)",
-      title: "26 read-only on-chain & MCP checks pass without private keys",
+      title: "31 read-only on-chain, KEM, archive & MCP checks pass without private keys",
       pillTone: "ok",
-      pillLabel: "26 passed, 0 failed",
-      subtitle: "Verifies deployed bytecode, Epoch 2 standing tree, @qorechain/mcp preflight, QoreScan CBOM & A1-A10",
+      pillLabel: "31 passed, 0 failed",
+      subtitle: "Verifies deployed bytecode, Epoch 2 standing tree, KEM registry, height-1 archive reverts, @qorechain/mcp preflight & QoreScan CBOM",
       actorLabel: "Runner",
-      actorValue: "Keyless JSON-RPC, Cosmos REST & @qorechain/mcp",
+      actorValue: "Keyless JSON-RPC, Cosmos REST, Archive EVM & @qorechain/mcp",
       layerLabel: "Target chain",
       layerValue: `${DEPLOYMENT.network} (EVM Chain ID ${DEPLOYMENT.evmChainId})`,
       diagnosticTitle: "Live check values",
       diagnostic: [
         `Guard owner()           = ${guardOwner} (live EVM RPC · renounced)`,
         `Monitor AA #2 fUSD      = ${monFusd} (live EVM RPC · freeze() 0xbd2d305f only)`,
-        `Standing Root Mandate   = active=${live ? String(live.rootMandateActive) : "true"} (Epoch ${live ? live.rootEpoch : STANDING_TREE.epoch})`,
+        `Standing Root Mandate   = active=${live ? String(live.rootMandateActive) : "true"} (Epoch ${live ? live.rootEpoch : standingTree.epoch})`,
+        `KEM Registry (ML-KEM)   = OrchestratorPqc #${authenticatedMessage.kemRegistry.orchestratorPqc.registeredHeight} · Payables #${authenticatedMessage.kemRegistry.payables.registeredHeight}`,
+        `Archive Decoder         = ${decodedAttacks.totalAttacks}/10 historical A1-A10 reverts decoded @ height - 1`,
         `QoreScan CBOM           = docs/cbom.json (CycloneDX 1.6)`,
         `Command                 = cd agent && npm install && npm run verify`,
       ].join("\n"),
@@ -355,6 +363,20 @@ export function getInspectorItem(
   const foundAttack = attacks.find((a) => a.id === chipId);
   if (foundAttack) {
     const context = CONTEXT_MAP[foundAttack.id] ?? "adversarial defense check";
+    const dec = decodedAttacks.attacks.find((d) => d.id === foundAttack.id);
+    const replayBlockLine = dec
+      ? dec.replayHeight
+        ? `Archive replay: block ${dec.replayHeight} (tx block ${dec.txHeight} · outer code=${dec.outerCode} · abstractaccount_execution_failed=${String(dec.aaFailedEvent)})`
+        : `Tx block ${dec.txHeight} · outer code=${dec.outerCode} · abstractaccount_execution_failed=${String(dec.aaFailedEvent)}`
+      : null;
+    const diagnosticLines = dec
+      ? [
+          `Decoded revert: ${dec.formattedError}`,
+          replayBlockLine!,
+          `Cosmos diagnostic: ${foundAttack.verbatimReason ?? "execution reverted: evm transaction execution failed"}`,
+        ].join("\n")
+      : (foundAttack.verbatimReason ?? "execution reverted: evm transaction execution failed");
+
     return {
       id: foundAttack.id,
       kind: "attack",
@@ -369,8 +391,19 @@ export function getInspectorItem(
       layerValue: shortReasonTag(foundAttack.layer),
       gasUsed: foundAttack.evmGasUsed,
       txHash: foundAttack.txHash,
-      diagnosticTitle: "Verbatim on-chain diagnostic",
-      diagnostic: foundAttack.verbatimReason ?? "execution reverted: evm transaction execution failed",
+      extraTxs:
+        dec && dec.targetTxHash && dec.targetTxHash.toUpperCase() !== foundAttack.txHash.toUpperCase()
+          ? [
+              { id: `${foundAttack.id} (kill-switch)`, txHash: foundAttack.txHash, gas: foundAttack.evmGasUsed },
+              { id: `${foundAttack.id} (post-revoke refused)`, txHash: dec.targetTxHash, gas: "0" },
+            ]
+          : undefined,
+      diagnosticTitle: dec
+        ? dec.layer === "cosmos_abstractaccount"
+          ? "Cosmos x/abstractaccount spending-limit refusal"
+          : "Decoded on-chain revert (height - 1 archive eth_call)"
+        : "Verbatim on-chain diagnostic",
+      diagnostic: diagnosticLines,
     };
   }
 
